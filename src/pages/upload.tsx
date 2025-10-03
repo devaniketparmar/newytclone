@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import UniversalLayout from '../components/UniversalLayout';
 
 interface UploadFormData {
   title: string;

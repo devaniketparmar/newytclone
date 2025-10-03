@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
-import UniversalLayout from '../components/UniversalLayout';
-import SearchHeader from '../components/SearchHeader';
+import SearchHeader from '@/components/SearchHeader';
+import UniversalLayout from '@/components/UniversalLayout';
 
 interface Video {
   id: string;

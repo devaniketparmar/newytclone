@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import UniversalLayout from '../../components/UniversalLayout';
-import VideoPlayer from '../../components/VideoPlayer';
-import VideoCard from '../../components/VideoCard';
+import UniversalLayout from '@/components/UniversalLayout';
+import VideoPlayer from '@/components/VideoPlayer';
+import VideoCard from '@/components/VideoCard';
 
 interface Video {
   id: string;
