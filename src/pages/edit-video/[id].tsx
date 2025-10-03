@@ -1,8 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import UniversalLayout from '../components/UniversalLayout';
 
-interface UploadFormData {
+interface VideoFormData {
   title: string;
   description: string;
   category: string;
@@ -18,21 +17,46 @@ interface UploadFormData {
   allowLiveStreaming: boolean;
 }
 
-export default function UploadPage() {
+interface Video {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  privacy: string;
+  tags: string;
+  language: string;
+  scheduledAt?: string;
+  ageRestriction: boolean;
+  commentsEnabled: boolean;
+  monetizationEnabled: boolean;
+  allowEmbedding: boolean;
+  showViewCount: boolean;
+  allowLiveStreaming: boolean;
+  thumbnailUrl?: string;
+  videoUrl: string;
+  duration: number;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+  createdAt: string;
+  channel: {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+  };
+}
+
+export default function EditVideoPage() {
   const router = useRouter();
+  const { id } = router.query;
   const [user, setUser] = useState<any>(null);
+  const [video, setVideo] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [customThumbnailFile, setCustomThumbnailFile] = useState<File | null>(null);
-  const [dragActive, setDragActive] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState<UploadFormData>({
+  const [formData, setFormData] = useState<VideoFormData>({
     title: '',
     description: '',
     category: 'Entertainment',
@@ -81,30 +105,75 @@ export default function UploadPage() {
     { code: 'hi', name: 'Hindi' }
   ];
 
-  // Check authentication
-  React.useEffect(() => {
-    const checkAuth = async () => {
+  // Check authentication and load video data
+  useEffect(() => {
+    const checkAuthAndLoadVideo = async () => {
       try {
-        const response = await fetch('/api/auth/me', {
+        // Check authentication
+        const authResponse = await fetch('/api/auth/me', {
           credentials: 'include'
         });
         
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData.data);
-        } else {
+        if (!authResponse.ok) {
           router.push('/auth');
+          return;
+        }
+        
+        const userData = await authResponse.json();
+        setUser(userData.data);
+
+        // Load video data
+        if (id) {
+          const videoResponse = await fetch(`/api/videos/${id}`, {
+            credentials: 'include'
+          });
+          
+          if (videoResponse.ok) {
+            const videoData = await videoResponse.json();
+            const videoInfo = videoData.data;
+            
+            // Check if user owns this video
+            if (videoInfo.channel.userId !== userData.data.id) {
+              setError('You do not have permission to edit this video');
+              return;
+            }
+            
+            setVideo(videoInfo);
+            
+            // Parse metadata
+            const metadata = typeof videoInfo.metadata === 'string' 
+              ? JSON.parse(videoInfo.metadata) 
+              : videoInfo.metadata || {};
+            
+            setFormData({
+              title: videoInfo.title || '',
+              description: videoInfo.description || '',
+              category: videoInfo.category || 'Entertainment',
+              privacy: videoInfo.privacy?.toLowerCase() || 'public',
+              tags: metadata.tags ? metadata.tags.join(', ') : '',
+              language: metadata.language || 'en',
+              scheduledAt: videoInfo.scheduledAt ? new Date(videoInfo.scheduledAt).toISOString().slice(0, 16) : '',
+              ageRestriction: metadata.ageRestriction || false,
+              commentsEnabled: metadata.commentsEnabled !== false,
+              monetizationEnabled: metadata.monetizationEnabled || false,
+              allowEmbedding: metadata.allowEmbedding !== false,
+              showViewCount: metadata.showViewCount !== false,
+              allowLiveStreaming: metadata.allowLiveStreaming || false
+            });
+          } else {
+            setError('Video not found');
+          }
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        router.push('/auth');
+        console.error('Error loading video:', error);
+        setError('Failed to load video data');
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
-  }, [router]);
+    checkAuthAndLoadVideo();
+  }, [id, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -114,172 +183,72 @@ export default function UploadPage() {
     }));
   };
 
-  const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelect(e.dataTransfer.files[0]);
-    }
-  }, []);
-
-  const handleFileSelect = (file: File) => {
-    // Validate file type
-    const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov'];
-    if (!allowedTypes.includes(file.type)) {
-      setError('Please select a valid video file (MP4, WebM, OGG, AVI, MOV)');
-      return;
-    }
-
-    // Validate file size (500MB limit)
-    const maxSize = 500 * 1024 * 1024; // 500MB
-    if (file.size > maxSize) {
-      setError('File size must be less than 500MB');
-      return;
-    }
-
-    setSelectedFile(file);
-    setError(null);
-    
-    // Auto-fill title if empty
-    if (!formData.title) {
-      const fileName = file.name.replace(/\.[^/.]+$/, '');
-      setFormData(prev => ({
-        ...prev,
-        title: fileName
-      }));
-    }
-  };
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
-
-  const handleThumbnailSelect = (file: File) => {
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      setError('Please select a valid image file (JPEG, PNG, GIF, WebP)');
-      return;
-    }
-
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      setError('Thumbnail file size must be less than 5MB');
-      return;
-    }
-
-    setCustomThumbnailFile(file);
-    setError(null);
-  };
-
-  const handleThumbnailInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleThumbnailSelect(e.target.files[0]);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Please select a video file');
-      return;
-    }
-
+  const handleSave = async () => {
     if (!formData.title.trim()) {
       setError('Please enter a video title');
       return;
     }
 
-    setUploading(true);
+    setSaving(true);
     setError(null);
-    setUploadProgress(0);
 
     try {
-      // Create FormData for file upload
-      const uploadData = new FormData();
-      uploadData.append('video', selectedFile);
-      uploadData.append('title', formData.title);
-      uploadData.append('description', formData.description);
-      uploadData.append('category', formData.category);
-      uploadData.append('privacy', formData.privacy);
-      uploadData.append('tags', formData.tags);
-      uploadData.append('language', formData.language);
-      uploadData.append('ageRestriction', formData.ageRestriction.toString());
-      uploadData.append('commentsEnabled', formData.commentsEnabled.toString());
-      uploadData.append('monetizationEnabled', formData.monetizationEnabled.toString());
-      uploadData.append('allowEmbedding', formData.allowEmbedding.toString());
-      uploadData.append('showViewCount', formData.showViewCount.toString());
-      uploadData.append('allowLiveStreaming', formData.allowLiveStreaming.toString());
-      
-      if (formData.scheduledAt) {
-        uploadData.append('scheduledAt', formData.scheduledAt);
+      const response = await fetch(`/api/videos/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setSuccess('Video updated successfully!');
+        setTimeout(() => {
+          router.push('/videos');
+        }, 2000);
+      } else {
+        setError(result.error || 'Failed to update video');
       }
-      
-      if (customThumbnailFile) {
-        uploadData.append('customThumbnail', customThumbnailFile);
-      }
-
-      // Upload with progress tracking
-      const xhr = new XMLHttpRequest();
-      
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = (e.loaded / e.total) * 100;
-          setUploadProgress(percentComplete);
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status === 200 || xhr.status === 201) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            if (response.success) {
-              setSuccess('Video uploaded successfully!');
-              setUploadProgress(100);
-              setTimeout(() => {
-                router.push('/videos');
-              }, 2000);
-            } else {
-              setError(response.error || 'Upload failed');
-            }
-          } catch (parseError) {
-            console.error('Error parsing response:', parseError);
-            setError('Upload completed but response was invalid');
-          }
-        } else {
-          console.error('Upload failed with status:', xhr.status, xhr.responseText);
-          setError(`Upload failed with status ${xhr.status}. Please try again.`);
-        }
-        setUploading(false);
-      });
-
-      xhr.addEventListener('error', () => {
-        setError('Upload failed. Please check your connection and try again.');
-        setUploading(false);
-      });
-
-      xhr.open('POST', '/api/videos/upload');
-      xhr.withCredentials = true; // Include cookies for authentication
-      xhr.send(uploadData);
-
     } catch (error) {
-      console.error('Upload error:', error);
-      setError('An error occurred during upload. Please try again.');
-      setUploading(false);
+      console.error('Error updating video:', error);
+      setError('An error occurred while updating the video');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/videos/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setSuccess('Video deleted successfully!');
+        setTimeout(() => {
+          router.push('/videos');
+        }, 2000);
+      } else {
+        setError(result.error || 'Failed to delete video');
+      }
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      setError('An error occurred while deleting the video');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -306,191 +275,145 @@ export default function UploadPage() {
     );
   }
 
-  if (!user) {
-    return null;
+  if (!user || !video) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-xl font-semibold mb-4">Error</div>
+          <p className="text-gray-600">{error || 'Video not found'}</p>
+          <button
+            onClick={() => router.push('/videos')}
+            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Back to Videos
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      {/* Professional Header */}
-      <header className="professional-header">
-        <div className="professional-container">
-          <div className="professional-nav">
+    <div className="min-h-screen bg-gray-100">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-3">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center cursor-pointer">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-neutral-900">YouTube Clone</h1>
+              <h1 className="text-xl font-bold text-gray-900">YouTube Clone</h1>
             </div>
             
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.push('/videos')}
-                className="professional-button professional-button-secondary"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
                 Browse Videos
               </button>
-              <div className="flex items-center space-x-3">
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-neutral-900">
-                    {user?.firstName} {user?.lastName}
-                  </p>
-                  <p className="text-xs text-neutral-500">@{user?.username}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="professional-button professional-button-danger"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Logout
-                </button>
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-xs text-gray-500">@{user?.username}</p>
               </div>
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="professional-container py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </div>
             <div>
-              <h2 className="professional-heading-1">Upload Video</h2>
-              <p className="professional-text text-lg">Share your content with the world</p>
+              <h2 className="text-3xl font-bold text-gray-900">Edit Video</h2>
+              <p className="text-gray-700 font-medium">Update your video details</p>
             </div>
           </div>
         </div>
 
-        {/* Upload Area */}
-        <div className="professional-card p-8 mb-8">
-          <div className="mb-6">
-            <h3 className="professional-heading-3">Video File</h3>
-            <p className="professional-text">Select or drag and drop your video file here</p>
+        {/* Video Preview */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
+          <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-200 mb-6">
+            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">Video Preview</h3>
           </div>
           
-          <div
-            className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
-              dragActive
-                ? 'border-primary-500 bg-primary-50 scale-105'
-                : selectedFile
-                ? 'border-success-500 bg-success-50'
-                : 'border-neutral-300 hover:border-primary-400 hover:bg-neutral-50'
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            {selectedFile ? (
-              <div className="space-y-6">
-                <div className="w-20 h-20 bg-gradient-to-r from-success-400 to-success-600 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-gray-900">{selectedFile.name}</h3>
-                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-700">
-                    <span className="flex items-center space-x-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3m0 0h8" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden">
+                {video.thumbnailUrl ? (
+                  <img
+                    src={video.thumbnailUrl.startsWith('/uploads/') ? `/api/uploads/${video.thumbnailUrl.replace('/uploads/', '')}` : video.thumbnailUrl}
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-blue-500">
+                    <div className="text-center text-white">
+                      <svg className="w-12 h-12 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
                       </svg>
-                      <span>{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      <span>Video File</span>
-                    </span>
+                      <p className="text-sm font-medium">Video Thumbnail</p>
+                    </div>
                   </div>
-                </div>
-                <button
-                  onClick={() => setSelectedFile(null)}
-                  className="professional-button professional-button-danger"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Remove file
-                </button>
+                )}
               </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="w-20 h-20 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-gray-900">Upload a video</h3>
-                  <p className="text-gray-700 font-medium">
-                    Drag and drop your video here, or click to browse
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Supports MP4, WebM, OGG, AVI, MOV (max 500MB)
-                  </p>
-                </div>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <span className="font-semibold">Select File</span>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={handleFileInputChange}
-                  className="hidden"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Upload Progress */}
-          {uploading && (
-            <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-200">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </div>
-                  <span className="text-lg font-semibold text-gray-900">Uploading...</span>
-                </div>
-                <span className="text-lg font-bold text-gray-900">{Math.round(uploadProgress)}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
-                <div
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
-              </div>
-              <p className="text-sm text-gray-700 mt-2 text-center">
-                Please don't close this page while uploading
-              </p>
             </div>
-          )}
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900">{video.title}</h4>
+                <p className="text-sm text-gray-600">{video.channel.name}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-semibold text-gray-700">Views:</span>
+                  <span className="ml-2 text-gray-600">{video.viewCount.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Likes:</span>
+                  <span className="ml-2 text-gray-600">{video.likeCount.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Comments:</span>
+                  <span className="ml-2 text-gray-600">{video.commentCount.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Duration:</span>
+                  <span className="ml-2 text-gray-600">{Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}</span>
+                </div>
+              </div>
+              
+              <div>
+                <span className="font-semibold text-gray-700">Uploaded:</span>
+                <span className="ml-2 text-gray-600">{new Date(video.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Video Details Form */}
+        {/* Video Details Form - Same as upload form but for editing */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
           <div className="flex items-center space-x-3 mb-8">
             <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
@@ -562,54 +485,6 @@ export default function UploadPage() {
                 />
                 <p className="text-sm text-gray-700 mt-2 font-medium">
                   Add tags to help people discover your video (max 15 tags)
-                </p>
-              </div>
-            </div>
-
-            {/* Thumbnail Section */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-200">
-                <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h4 className="text-lg font-bold text-gray-900">Thumbnail</h4>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-3">
-                  Custom Thumbnail (Optional)
-                </label>
-                <div className="flex items-center space-x-4">
-                  <div className="flex-1">
-                    <input
-                      ref={thumbnailInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleThumbnailInputChange}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => thumbnailInputRef.current?.click()}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-purple-400 transition-all duration-200 text-left text-gray-900 font-medium"
-                    >
-                      {customThumbnailFile ? customThumbnailFile.name : 'Choose thumbnail image'}
-                    </button>
-                  </div>
-                  {customThumbnailFile && (
-                    <button
-                      type="button"
-                      onClick={() => setCustomThumbnailFile(null)}
-                      className="px-4 py-2 text-sm font-bold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-                <p className="text-sm text-gray-700 mt-2 font-medium">
-                  Upload a custom thumbnail (1280x720 recommended). If not provided, one will be auto-generated from your video.
                 </p>
               </div>
             </div>
@@ -836,35 +711,45 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* Upload Button */}
-        <div className="flex justify-end space-x-4">
+        {/* Action Buttons */}
+        <div className="flex justify-between">
           <button
-            onClick={() => router.push('/videos')}
-            className="px-8 py-3 border-2 border-gray-300 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+            onClick={handleDelete}
+            disabled={saving}
+            className="px-8 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
           >
-            Cancel
+            {saving ? 'Processing...' : 'Delete Video'}
           </button>
-          <button
-            onClick={handleUpload}
-            disabled={!selectedFile || uploading}
-            className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
-          >
-            {uploading ? (
-              <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span>Uploading...</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <span>Upload Video</span>
-              </div>
-            )}
-          </button>
+          
+          <div className="flex space-x-4">
+            <button
+              onClick={() => router.push('/videos')}
+              className="px-8 py-3 border-2 border-gray-300 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+            >
+              {saving ? (
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Saving...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Save Changes</span>
+                </div>
+              )}
+            </button>
+          </div>
         </div>
       </main>
     </div>

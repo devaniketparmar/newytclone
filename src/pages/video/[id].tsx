@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import UniversalLayout from '../../components/UniversalLayout';
 import VideoPlayer from '../../components/VideoPlayer';
+import VideoCard from '../../components/VideoCard';
 
 interface Video {
   id: string;
@@ -18,344 +20,295 @@ interface Video {
   channel: {
     id: string;
     name: string;
-    avatarUrl?: string;
+    avatarUrl: string;
     subscriberCount: number;
+    userId: string;
   };
 }
 
-interface User {
-  id: string;
-  email: string;
-  username: string;
-  firstName?: string;
-  lastName?: string;
-  avatarUrl?: string;
+interface VideoPageProps {
+  video: Video;
+  relatedVideos: Video[];
+  user?: any;
 }
 
-export default function VideoDetailPage() {
+export default function VideoPage({ video, relatedVideos, user }: VideoPageProps) {
   const router = useRouter();
-  const { id } = router.query;
-  
-  const [video, setVideo] = useState<Video | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-
-      try {
-        // Fetch user data
-        const userResponse = await fetch('/api/auth/me', { credentials: 'include' });
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUser(userData.data);
-        }
-
-        // Fetch video data
-        const videoResponse = await fetch(`/api/videos/${id}`, { credentials: 'include' });
-        if (videoResponse.ok) {
-          const videoData = await videoResponse.json();
-          setVideo(videoData.data);
-        } else {
-          setError('Video not found');
-        }
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('An error occurred while loading the video');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [id]);
+    // Load user's like and subscription status
+    if (user) {
+      // This would typically come from an API call
+      setIsLiked(false);
+      setIsSubscribed(false);
+    }
+  }, [user]);
 
   const handleLike = async () => {
-    if (!video || !user) return;
+    if (!user) {
+      router.push('/auth');
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/videos/${video.id}/like`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setIsLiked(result.data.isLiked);
-        setVideo(prev => prev ? {
-          ...prev,
-          likeCount: result.data.likeCount
-        } : null);
-      }
+      setLoading(true);
+      // API call to like/unlike video
+      setIsLiked(!isLiked);
     } catch (error) {
       console.error('Error liking video:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubscribe = async () => {
-    if (!video || !user) return;
+    if (!user) {
+      router.push('/auth');
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/channels/${video.channel.id}/subscribe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setIsSubscribed(result.data.isSubscribed);
-      }
+      setLoading(true);
+      // API call to subscribe/unsubscribe
+      setIsSubscribed(!isSubscribed);
     } catch (error) {
       console.error('Error subscribing:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      router.push('/auth');
-    } catch (error) {
-      console.error('Logout failed:', error);
+  const formatViewCount = (count: number | undefined | null) => {
+    if (!count || count === 0) {
+      return '0';
     }
-  };
-
-  const formatViewCount = (count: number) => {
     if (count >= 1000000) {
-      return `${(count / 1000000).toFixed(1)}M views`;
+      return `${(count / 1000000).toFixed(1)}M`;
     }
     if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K views`;
+      return `${(count / 1000).toFixed(1)}K`;
     }
-    return `${count} views`;
+    return count.toString();
   };
 
-  const formatSubscriberCount = (count: number) => {
-    if (count >= 1000000) {
-      return `${(count / 1000000).toFixed(1)}M subscribers`;
+  const formatTimeAgo = (dateString: string | undefined | null) => {
+    if (!dateString) {
+      return 'Unknown';
     }
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K subscribers`;
-    }
-    return `${count} subscribers`;
-  };
-
-  const timeAgo = (dateString: string) => {
+    const date = new Date(dateString);
     const now = new Date();
-    const past = new Date(dateString);
-    const seconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + " years ago";
-    interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + " months ago";
-    interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + " days ago";
-    interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + " hours ago";
-    interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + " minutes ago";
-    return Math.floor(seconds) + " seconds ago";
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+    return `${Math.floor(diffInSeconds / 31536000)} years ago`;
   };
 
-  if (loading) {
+  if (!video) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading video...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !video) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+      <UniversalLayout user={user}>
+        <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-6">
+            <div className="w-16 h-16 bg-error-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-neutral-900 mb-2">Video Not Found</h3>
+            <p className="text-neutral-600 mb-6">
+              The video you're looking for doesn't exist or has been removed.
+            </p>
+            <button 
+              onClick={() => router.push('/videos')}
+              className="professional-button professional-button-primary"
+            >
+              Browse Videos
+            </button>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Video Not Found</h2>
-          <p className="text-gray-600 mb-4">{error || 'The video you are looking for does not exist.'}</p>
-          <button
-            onClick={() => router.push('/videos')}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Browse Videos
-          </button>
         </div>
-      </div>
+      </UniversalLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-3">
-            <div className="flex items-center space-x-4">
-              <div 
-                className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center cursor-pointer"
-                onClick={() => router.push('/videos')}
-              >
-                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-              </div>
-              <h1 className="text-xl font-bold text-gray-900">YouTube Clone</h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/upload')}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                Upload
-              </button>
-              <button
-                onClick={() => router.push('/videos')}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Browse
-              </button>
-              {user && (
-                <>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">
-                      {user?.firstName} {user?.lastName}
-                    </p>
-                    <p className="text-xs text-gray-500">@{user?.username}</p>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    Logout
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Video Player and Info */}
-          <div className="lg:col-span-2 space-y-6">
+    <UniversalLayout user={user}>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Video Section */}
+          <div className="lg:col-span-2">
             {/* Video Player */}
-            <VideoPlayer
-              videoUrl={video.videoUrl.startsWith('/uploads/') ? `/api/uploads/${video.videoUrl.replace('/uploads/', '')}` : video.videoUrl}
-              title={video.title}
-              thumbnailUrl={video.thumbnailUrl ? (video.thumbnailUrl.startsWith('/uploads/') ? `/api/uploads/${video.thumbnailUrl.replace('/uploads/', '')}` : video.thumbnailUrl) : undefined}
-              className="aspect-video"
-            />
+            <div className="bg-black rounded-lg overflow-hidden mb-4">
+              <VideoPlayer
+                videoUrl={video.videoUrl}
+                thumbnailUrl={video.thumbnailUrl}
+                title={video.title}
+              />
+            </div>
 
             {/* Video Info */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">{video.title}</h1>
+            <div className="bg-white rounded-lg p-6 mb-6">
+              <h1 className="text-2xl font-bold text-neutral-900 mb-4">{video.title}</h1>
               
+              {/* Video Stats */}
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={video.channel.avatarUrl || '/api/placeholder/40/40'}
-                      alt={video.channel.name}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{video.channel.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        {formatSubscriberCount(video.channel.subscriberCount)}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleSubscribe}
-                    className={`px-4 py-2 rounded-full font-medium transition-colors ${
-                      isSubscribed
-                        ? 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-                        : 'bg-red-600 text-white hover:bg-red-700'
-                    }`}
-                  >
-                    {isSubscribed ? 'Subscribed' : 'Subscribe'}
-                  </button>
+                <div className="flex items-center space-x-6 text-sm text-neutral-600">
+                  <span>{formatViewCount(video.viewCount)} views</span>
+                  <span>{formatTimeAgo(video.publishedAt)}</span>
                 </div>
-
+                
                 <div className="flex items-center space-x-2">
-                  <button
+                  <button 
                     onClick={handleLike}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-full font-medium transition-colors ${
-                      isLiked
-                        ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors ${
+                      isLiked 
+                        ? 'bg-primary-100 text-primary-700' 
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                     }`}
                   >
-                    <svg className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
                     </svg>
-                    <span>{video.likeCount}</span>
+                    <span>{formatViewCount(video.likeCount)}</span>
                   </button>
                   
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-full font-medium hover:bg-gray-200 transition-colors">
+                  <button className="flex items-center space-x-2 px-4 py-2 rounded-full bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                     </svg>
                     <span>Share</span>
                   </button>
+                  
+                  <button className="flex items-center space-x-2 px-4 py-2 rounded-full bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                    <span>Save</span>
+                  </button>
                 </div>
               </div>
 
-              {/* Video Stats */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <div className="flex items-center space-x-6 text-sm text-gray-600">
-                  <span>{formatViewCount(video.viewCount)}</span>
-                  <span>{timeAgo(video.publishedAt)}</span>
+              {/* Channel Info */}
+              <div className="flex items-center justify-between py-4 border-t border-neutral-200">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-neutral-300 rounded-full">
+                    <img
+                      src={video.channel.avatarUrl || '/api/placeholder/48/48'}
+                      alt={video.channel.name}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-neutral-900">{video.channel.name}</h3>
+                    <p className="text-sm text-neutral-600">{formatViewCount(video.channel.subscriberCount)} subscribers</p>
+                  </div>
                 </div>
+                
+                <button 
+                  onClick={handleSubscribe}
+                  className={`px-6 py-2 rounded-full font-medium transition-colors ${
+                    isSubscribed 
+                      ? 'bg-neutral-200 text-neutral-800 hover:bg-neutral-300' 
+                      : 'bg-primary-600 text-white hover:bg-primary-700'
+                  }`}
+                >
+                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                </button>
               </div>
 
               {/* Description */}
-              <div className="prose max-w-none">
-                <p className="text-gray-700 whitespace-pre-wrap">{video.description}</p>
-              </div>
-            </div>
-
-            {/* Comments Section */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Comments ({video.commentCount})
-              </h3>
-              <div className="text-center py-8 text-gray-500">
-                <p>Comments feature coming soon!</p>
+              <div className="mt-4 p-4 bg-neutral-50 rounded-lg">
+                <p className="text-neutral-800 whitespace-pre-wrap">{video.description}</p>
               </div>
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4">
-            <div className="bg-white rounded-lg shadow-sm border p-4">
-              <h3 className="font-semibold text-gray-900 mb-3">Related Videos</h3>
-              <div className="text-center py-8 text-gray-500">
-                <p>Related videos coming soon!</p>
-              </div>
+          <div className="lg:col-span-1">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-neutral-900">Related Videos</h3>
+              {relatedVideos.map((relatedVideo) => (
+                <VideoCard
+                  key={relatedVideo.id}
+                  video={relatedVideo}
+                  user={user}
+                  layout="list"
+                />
+              ))}
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </UniversalLayout>
   );
 }
 
+export const getServerSideProps = async (context: any) => {
+  try {
+    const { id } = context.params;
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://your-domain.com' 
+      : 'http://localhost:3000';
+
+    // Fetch video data
+    const videoResponse = await fetch(`${baseUrl}/api/videos/${id}`);
+    let video = null;
+    
+    if (videoResponse.ok) {
+      const videoData = await videoResponse.json();
+      video = videoData.data;
+    }
+
+    // Fetch related videos
+    const relatedResponse = await fetch(`${baseUrl}/api/videos`);
+    let relatedVideos = [];
+    
+    if (relatedResponse.ok) {
+      const relatedData = await relatedResponse.json();
+      relatedVideos = (relatedData.data || []).filter((v: any) => v.id !== id).slice(0, 10);
+    }
+
+    // Try to get user data from cookies
+    let user = null;
+    const token = context.req.cookies.token;
+    
+    if (token) {
+      try {
+        const userResponse = await fetch(`${baseUrl}/api/auth/me`, {
+          headers: {
+            'Cookie': `token=${token}`
+          }
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          user = userData.data.user;
+        }
+      } catch (error) {
+        console.log('Could not fetch user data:', error);
+      }
+    }
+
+    return {
+      props: {
+        video,
+        relatedVideos,
+        user
+      }
+    };
+  } catch (error) {
+    console.error('Error in getServerSideProps:', error);
+    return {
+      props: {
+        video: null,
+        relatedVideos: [],
+        user: null
+      }
+    };
+  }
+};

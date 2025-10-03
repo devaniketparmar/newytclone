@@ -17,24 +17,20 @@ async function handleGetVideos(req: NextApiRequest, res: NextApiResponse) {
     // Initialize database connection
     const prisma = await getInitializedPrisma();
     
-    // Get token from Authorization header or cookies
+    // Get token from Authorization header or cookies (optional for public videos)
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '') || req.cookies.token;
     
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: 'No authentication token provided'
-      });
-    }
-
-    // Verify token
-    const decoded = JWTUtils.verifyToken(token);
-    if (!decoded || !decoded.userId) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid or expired token'
-      });
+    let userId = null;
+    if (token) {
+      try {
+        const decoded = JWTUtils.verifyToken(token);
+        if (decoded && decoded.userId) {
+          userId = decoded.userId;
+        }
+      } catch (error) {
+        console.log('Token verification failed, proceeding without authentication');
+      }
     }
 
     // Get query parameters
@@ -69,7 +65,8 @@ async function handleGetVideos(req: NextApiRequest, res: NextApiResponse) {
             id: true,
             name: true,
             avatarUrl: true,
-            subscriberCount: true
+            subscriberCount: true,
+            userId: true
           }
         }
       },
@@ -96,11 +93,13 @@ async function handleGetVideos(req: NextApiRequest, res: NextApiResponse) {
       commentCount: video.commentCount,
       createdAt: video.createdAt,
       publishedAt: video.publishedAt || video.createdAt,
+      status: video.status,
       channel: {
         id: video.channel.id,
         name: video.channel.name,
         avatarUrl: video.channel.avatarUrl,
-        subscriberCount: video.channel.subscriberCount
+        subscriberCount: video.channel.subscriberCount,
+        userId: video.channel.userId
       }
     }));
 
