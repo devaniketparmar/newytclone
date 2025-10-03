@@ -96,6 +96,14 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
     const category = Array.isArray(fields.category) ? fields.category[0] : fields.category || 'Entertainment';
     const privacy = Array.isArray(fields.privacy) ? fields.privacy[0] : fields.privacy || 'public';
     const tags = Array.isArray(fields.tags) ? fields.tags[0] : fields.tags || '';
+    const language = Array.isArray(fields.language) ? fields.language[0] : fields.language || 'en';
+    const scheduledAt = Array.isArray(fields.scheduledAt) ? fields.scheduledAt[0] : fields.scheduledAt;
+    const ageRestriction = Array.isArray(fields.ageRestriction) ? fields.ageRestriction[0] === 'true' : false;
+    const commentsEnabled = Array.isArray(fields.commentsEnabled) ? fields.commentsEnabled[0] === 'true' : true;
+    const monetizationEnabled = Array.isArray(fields.monetizationEnabled) ? fields.monetizationEnabled[0] === 'true' : false;
+    const allowEmbedding = Array.isArray(fields.allowEmbedding) ? fields.allowEmbedding[0] === 'true' : true;
+    const showViewCount = Array.isArray(fields.showViewCount) ? fields.showViewCount[0] === 'true' : true;
+    const allowLiveStreaming = Array.isArray(fields.allowLiveStreaming) ? fields.allowLiveStreaming[0] === 'true' : false;
 
     if (!title || !title.trim()) {
       return res.status(400).json({
@@ -295,12 +303,20 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
         likeCount: 0,
         dislikeCount: 0,
         commentCount: 0,
-        publishedAt: new Date(),
+        publishedAt: scheduledAt ? new Date(scheduledAt) : new Date(),
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         metadata: JSON.stringify({
           originalFileName: videoFile.originalFilename,
           fileType: videoFile.mimetype,
           uploadDate: new Date().toISOString(),
-          tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+          language: language,
+          tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0),
+          ageRestriction: ageRestriction,
+          commentsEnabled: commentsEnabled,
+          monetizationEnabled: monetizationEnabled,
+          allowEmbedding: allowEmbedding,
+          showViewCount: showViewCount,
+          allowLiveStreaming: allowLiveStreaming
         }),
         processingStatus: JSON.stringify({
           status: 'processing',
