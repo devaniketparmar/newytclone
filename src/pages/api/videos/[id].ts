@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getInitializedPrisma } from '../../../lib/prisma';
-import { JWTUtils } from '../../../utils/auth';
+import { getInitializedPrisma } from '@/lib/prisma';
+import { JWTUtils } from '@/utils/auth';
 import { VideoPrivacy } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';

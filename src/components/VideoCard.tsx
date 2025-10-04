@@ -76,57 +76,68 @@ export default function VideoCard({
   if (layout === 'list') {
     return (
       <div 
-        className="flex bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+        className="flex bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-neutral-100 hover:border-neutral-200"
         onClick={handleCardClick}
       >
         {/* Thumbnail */}
-        <div className="relative w-80 h-48 bg-neutral-200 rounded-l-lg overflow-hidden flex-shrink-0">
+        <div className="relative w-80 h-48 bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-l-xl overflow-hidden flex-shrink-0 group">
           {video.thumbnailUrl ? (
             <img
               src={video.thumbnailUrl.startsWith('/uploads/') ? `/api/uploads/${video.thumbnailUrl.replace('/uploads/', '')}` : video.thumbnailUrl}
               alt={video.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               onError={(e) => {
                 e.currentTarget.src = '/api/placeholder/320/180';
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500 to-secondary-500">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-500 to-orange-500">
               <div className="text-center text-white">
-                <svg className="w-12 h-12 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-3">
+                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
                 <p className="text-sm font-medium">Processing...</p>
               </div>
             </div>
           )}
           
+          {/* Play Button Overlay */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100">
+              <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+          </div>
+          
           {/* Duration Badge */}
-          <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
+          <div className="absolute bottom-3 right-3 bg-black/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">
             {formatDuration(video.duration)}
           </div>
           
           {/* Status Badge */}
           {video.status === 'PROCESSING' && (
-            <div className="absolute top-2 left-2 bg-warning-500 text-white text-xs px-2 py-1 rounded">
+            <div className="absolute top-3 left-3 bg-orange-500 text-white text-xs px-2 py-1 rounded-md font-medium">
               Processing
             </div>
           )}
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-4">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-semibold text-neutral-900 line-clamp-2 flex-1 mr-4">
+        <div className="flex-1 p-6">
+          <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-gray-900 line-clamp-2 flex-1 mr-4 group-hover:text-red-600 transition-colors duration-200">
               {video.title}
             </h3>
             
             {/* Edit/Delete buttons for video owner */}
             {user && video.channel.userId === user.id && onEdit && onDelete && (
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={(e) => onEdit(video.id, e)}
-                  className="p-2 text-neutral-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                  className="p-2 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="Edit video"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +147,7 @@ export default function VideoCard({
                 <button
                   onClick={(e) => onDelete(video.id, e)}
                   disabled={deletingVideoId === video.id}
-                  className="p-2 text-neutral-500 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors disabled:opacity-50"
+                  className="p-2 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                   title="Delete video"
                 >
                   {deletingVideoId === video.id ? (
@@ -153,34 +164,38 @@ export default function VideoCard({
             )}
           </div>
 
-          <div className="flex items-center space-x-4 text-sm text-neutral-600 mb-3">
-            <span>{formatViewCount(video.viewCount)} views</span>
-            <span>•</span>
-            <span>{formatTimeAgo(video.publishedAt)}</span>
+            <div className="flex items-center space-x-4 text-sm text-gray-700 mb-4">
+            <div className="flex items-center space-x-1">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <span>{formatViewCount(video.viewCount)} views</span>
+            </div>
+            <span className="text-neutral-300">•</span>
+            <div className="flex items-center space-x-1">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{formatTimeAgo(video.publishedAt)}</span>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="w-10 h-10 bg-neutral-300 rounded-full flex-shrink-0">
-              <img
-                src={video.channel.avatarUrl || '/api/placeholder/40/40'}
-                alt={video.channel.name}
-                className="w-full h-full rounded-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNFNUU3RUIiLz4KPHBhdGggZD0iTTIwIDEyQzIyLjIwOTEgMTIgMjQgMTMuNzkwOSAyNCAxNkMyNCAxOC4yMDkxIDIyLjIwOTEgMjAgMjAgMjBDMTcuNzkwOSAyMCAxNiAxOC4yMDkxIDE2IDE2QzE2IDEzLjc5MDkgMTcuNzkwOSAxMiAyMCAxMloiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTIwIDI0QzE0LjQ3NzEgMjQgMTAgMjguNDc3MSAxMCAzNEgzMEMzMCAyOC40NzcxIDI1LjUyMjkgMjQgMjAgMjRaIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo=';
-                }}
-              />
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold shadow-lg">
+              {video.channel.name ? video.channel.name.charAt(0).toUpperCase() : 'C'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-neutral-900 truncate">
+                <p className="text-sm font-semibold text-gray-900 truncate">
                 {video.channel.name}
               </p>
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-gray-600">
                 {formatViewCount(video.channel.subscriberCount)} subscribers
               </p>
             </div>
           </div>
 
-          <p className="text-sm text-neutral-600 line-clamp-2">
+            <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">
             {video.description}
           </p>
         </div>
@@ -191,49 +206,60 @@ export default function VideoCard({
   // Grid layout (default)
   return (
     <div 
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
+      className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-neutral-100 hover:border-neutral-200"
       onClick={handleCardClick}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-neutral-200 rounded-t-lg overflow-hidden">
+      <div className="relative aspect-video bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-t-xl overflow-hidden">
         {video.thumbnailUrl ? (
           <img
             src={video.thumbnailUrl.startsWith('/uploads/') ? `/api/uploads/${video.thumbnailUrl.replace('/uploads/', '')}` : video.thumbnailUrl}
             alt={video.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
               e.currentTarget.src = '/api/placeholder/320/180';
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500 to-secondary-500">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-500 to-orange-500">
             <div className="text-center text-white">
-              <svg className="w-12 h-12 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-3">
+                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </div>
               <p className="text-sm font-medium">Processing...</p>
             </div>
           </div>
         )}
         
+        {/* Play Button Overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+          <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100">
+            <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+        </div>
+        
         {/* Duration Badge */}
-        <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
+        <div className="absolute bottom-3 right-3 bg-black/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">
           {formatDuration(video.duration)}
         </div>
         
         {/* Status Badge */}
         {video.status === 'PROCESSING' && (
-          <div className="absolute top-2 left-2 bg-warning-500 text-white text-xs px-2 py-1 rounded">
+          <div className="absolute top-3 left-3 bg-orange-500 text-white text-xs px-2 py-1 rounded-md font-medium">
             Processing
           </div>
         )}
 
         {/* Edit/Delete buttons for video owner */}
         {user && video.channel.userId === user.id && onEdit && onDelete && (
-          <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className="absolute top-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button
               onClick={(e) => onEdit(video.id, e)}
-              className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-neutral-600 hover:text-primary-600 rounded-lg transition-all duration-200 shadow-sm"
+              className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white text-neutral-600 hover:text-blue-600 rounded-lg transition-all duration-200 shadow-lg"
               title="Edit video"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +269,7 @@ export default function VideoCard({
             <button
               onClick={(e) => onDelete(video.id, e)}
               disabled={deletingVideoId === video.id}
-              className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-neutral-600 hover:text-error-600 rounded-lg transition-all duration-200 shadow-sm disabled:opacity-50"
+              className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white text-neutral-600 hover:text-red-600 rounded-lg transition-all duration-200 shadow-lg disabled:opacity-50"
               title="Delete video"
             >
               {deletingVideoId === video.id ? (
@@ -261,31 +287,35 @@ export default function VideoCard({
       </div>
 
       {/* Video Info */}
-      <div className="p-3">
-        <h3 className="text-sm font-semibold text-neutral-900 line-clamp-2 mb-2 group-hover:text-primary-600 transition-colors">
+      <div className="p-4">
+            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-3 group-hover:text-red-600 transition-colors duration-200 leading-tight">
           {video.title}
         </h3>
         
         <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-neutral-300 rounded-full flex-shrink-0">
-            <img
-              src={video.channel.avatarUrl || '/api/placeholder/32/32'}
-              alt={video.channel.name}
-              className="w-full h-full rounded-full object-cover"
-              onError={(e) => {
-                e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNFNUU3RUIiLz4KPHBhdGggZD0iTTE2IDEwQzE4LjIwOTEgMTAgMjAgMTEuNzkwOSAyMCAxNEMyMCAxNi4yMDkxIDE4LjIwOTEgMTggMTYgMThDMTMuNzkwOSAxOCAxMiAxNi4yMDkxIDEyIDE0QzEyIDExLjc5MDkgMTMuNzkwOSAxMCAxNiAxMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTE2IDIwQzEwLjQ3NzEgMjAgNiAyNC40NzcxIDYgMzBIMjZDMjYgMjQuNDc3MSAyMS41MjI5IDIwIDE2IDIwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
-              }}
-            />
+          <div className="w-9 h-9 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md flex-shrink-0">
+            {video.channel.name ? video.channel.name.charAt(0).toUpperCase() : 'C'}
           </div>
           
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-neutral-900 truncate">
+                <p className="text-sm font-medium text-gray-900 truncate mb-1">
               {video.channel.name}
             </p>
-            <div className="flex items-center space-x-2 text-xs text-neutral-500">
-              <span>{formatViewCount(video.viewCount)} views</span>
-              <span>•</span>
-              <span>{formatTimeAgo(video.publishedAt)}</span>
+            <div className="flex items-center space-x-2 text-xs text-gray-600">
+              <div className="flex items-center space-x-1">
+                <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span>{formatViewCount(video.viewCount)} views</span>
+              </div>
+              <span className="text-neutral-300">•</span>
+              <div className="flex items-center space-x-1">
+                <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{formatTimeAgo(video.publishedAt)}</span>
+              </div>
             </div>
           </div>
         </div>

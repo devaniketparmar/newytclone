@@ -299,7 +299,7 @@ export default function UploadPage() {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-800">Loading...</p>
         </div>
       </div>
     );
@@ -401,7 +401,7 @@ export default function UploadPage() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-semibold text-gray-900">{selectedFile.name}</h3>
-                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-700">
+                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-800">
                     <span className="flex items-center space-x-1">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3m0 0h8" />
@@ -435,10 +435,10 @@ export default function UploadPage() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-semibold text-gray-900">Upload a video</h3>
-                  <p className="text-gray-700 font-medium">
+                  <p className="text-gray-800 font-medium">
                     Drag and drop your video here, or click to browse
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-700">
                     Supports MP4, WebM, OGG, AVI, MOV (max 500MB)
                   </p>
                 </div>

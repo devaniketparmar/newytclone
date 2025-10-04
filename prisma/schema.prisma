@@ -36,11 +36,15 @@ model User {
   // Relations
   channels          Channel[]
   subscriptions     Subscription[]
-  comments          Comment[]
+  comments          Comment[] @relation("UserComments")
   likes             Like[]
   views             View[]
   playlists         Playlist[]
   notifications     Notification[]
+  commentReports    CommentReport[] @relation("CommentReporter")
+  commentReviews    CommentReport[] @relation("CommentReviewer")
+  commentNotifications CommentNotification[]
+  pinnedComments    Comment[] @relation("PinnedComments")
 
   @@map("users")
 }
@@ -151,13 +155,19 @@ model Comment {
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
   status      CommentStatus @default(ACTIVE)
+  pinned      Boolean       @default(false)
+  pinnedAt    DateTime?     @map("pinned_at")
+  pinnedBy    String?       @map("pinned_by")
 
   // Relations
   video       Video         @relation(fields: [videoId], references: [id], onDelete: Cascade)
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User          @relation("UserComments", fields: [userId], references: [id], onDelete: Cascade)
   parent      Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies     Comment[]     @relation("CommentReplies")
   likes       Like[]
+  reports     CommentReport[]
+  notifications CommentNotification[]
+  pinnedByUser User?        @relation("PinnedComments", fields: [pinnedBy], references: [id])
 
   @@map("comments")
 }
@@ -353,4 +363,38 @@ enum NotificationType {
   NEW_SUBSCRIPTION
   TRENDING
   SYSTEM
+}
+
+model CommentReport {
+  id          String   @id @default(uuid())
+  commentId   String   @map("comment_id")
+  reporterId  String   @map("reporter_id")
+  reason      String   // 'spam', 'harassment', 'inappropriate', 'other'
+  description String?
+  status      String   @default("pending") // 'pending', 'reviewed', 'resolved'
+  createdAt   DateTime @default(now()) @map("created_at")
+  reviewedAt  DateTime? @map("reviewed_at")
+  reviewedBy  String?   @map("reviewed_by")
+
+  // Relations
+  comment     Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporter    User     @relation("CommentReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewer    User?    @relation("CommentReviewer", fields: [reviewedBy], references: [id])
+
+  @@map("comment_reports")
+}
+
+model CommentNotification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  commentId String   @map("comment_id")
+  type      String   // 'reply', 'mention', 'like', 'pinned'
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("comment_notifications")
 }

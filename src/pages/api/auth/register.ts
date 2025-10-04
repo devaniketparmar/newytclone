@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
-import { getInitializedPrisma } from '../../../lib/prisma';
+import { getInitializedPrisma } from '@/lib/prisma';
 import {
   PasswordUtils,
   JWTUtils,
@@ -16,7 +16,7 @@ import {
   loginSchema,
   passwordResetSchema,
   passwordResetConfirmSchema
-} from '../../../utils/auth';
+} from '@/utils/auth';
 
 // Register endpoint
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getInitializedPrisma } from '../../../lib/prisma';
-import { JWTUtils } from '../../../utils/auth';
+import { getInitializedPrisma } from '@/lib/prisma';
+import { JWTUtils } from '@/utils/auth';
 import { VideoPrivacy, VideoStatus } from '@prisma/client';
 import formidable from 'formidable';
 import fs from 'fs';
