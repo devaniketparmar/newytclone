@@ -198,10 +198,29 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
     const stats = fs.statSync(filePath);
     const fileSize = stats.size;
 
-    // Generate thumbnail
-    let thumbnailUrl = null;
+    // Extract video metadata first (independent of thumbnail processing)
     let duration = 0;
     let resolution = '1280x720';
+    
+    try {
+      console.log('Extracting video metadata from:', filePath);
+      const metadata = await ThumbnailGenerator.getVideoMetadata(filePath);
+      duration = Math.floor(metadata.format.duration || 0);
+      
+      // Get resolution from video stream
+      const videoStream = metadata.streams.find((stream: any) => stream.codec_type === 'video');
+      if (videoStream && videoStream.width && videoStream.height) {
+        resolution = `${videoStream.width}x${videoStream.height}`;
+      }
+      
+      console.log('Video metadata extracted successfully:', { duration, resolution });
+    } catch (metadataError) {
+      console.warn('Could not extract video metadata:', metadataError);
+      // Continue with default values
+    }
+
+    // Generate thumbnail
+    let thumbnailUrl = null;
 
     try {
       console.log('Processing thumbnail for video:', filePath);
@@ -263,22 +282,6 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
           await ThumbnailGenerator.generatePlaceholderThumbnail(placeholderPath, 320, 180);
           thumbnailUrl = `/uploads/thumbnails/${placeholderFileName}`;
         }
-      }
-      
-      // Try to get video metadata
-      try {
-        const metadata = await ThumbnailGenerator.getVideoMetadata(filePath);
-        duration = Math.floor(metadata.format.duration || 0);
-        
-        // Get resolution from video stream
-        const videoStream = metadata.streams.find((stream: any) => stream.codec_type === 'video');
-        if (videoStream && videoStream.width && videoStream.height) {
-          resolution = `${videoStream.width}x${videoStream.height}`;
-        }
-        
-        console.log('Video metadata extracted:', { duration, resolution });
-      } catch (metadataError) {
-        console.warn('Could not extract video metadata:', metadataError);
       }
       
     } catch (error) {
