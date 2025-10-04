@@ -274,7 +274,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
         lg:translate-x-0 lg:static lg:z-auto lg:block
         w-64 lg:w-64
       `}>
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full max-h-screen">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-neutral-200">
             <div className="flex items-center space-x-3">
@@ -296,7 +296,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
           </div>
 
           {/* Navigation */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-neutral-50 hover:scrollbar-thumb-neutral-300 scroll-smooth pb-4">
             {/* Main Navigation */}
             <div className="p-2">
               {mainNavigationItems.map((item, index) => (
