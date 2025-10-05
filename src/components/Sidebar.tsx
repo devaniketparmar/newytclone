@@ -23,6 +23,24 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  // Load collapsed state from sessionStorage on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedCollapsedState = sessionStorage.getItem('sidebar-collapsed');
+      if (savedCollapsedState !== null) {
+        setIsCollapsed(JSON.parse(savedCollapsedState));
+      }
+    }
+  }, []);
+
+  // Save collapsed state to sessionStorage whenever it changes
+  const handleCollapseToggle = (collapsed: boolean) => {
+    setIsCollapsed(collapsed);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('sidebar-collapsed', JSON.stringify(collapsed));
+    }
+  };
+
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -407,7 +425,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    onClick={() => handleCollapseToggle(!isCollapsed)}
                     className="hidden lg:flex p-2 rounded-xl hover:bg-neutral-100 transition-colors duration-200"
                     title="Hide sidebar"
                   >
@@ -779,7 +797,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
       {/* Hamburger Menu Button - Show when sidebar is hidden */}
       {isCollapsed && (
         <button
-          onClick={() => setIsCollapsed(false)}
+          onClick={() => handleCollapseToggle(false)}
           className="fixed top-1 left-4 z-50 lg:flex hidden p-2 bg-white rounded-xl shadow-lg border border-neutral-200 hover:bg-neutral-50 transition-all duration-200 hover:scale-105"
           title="Show sidebar"
         >

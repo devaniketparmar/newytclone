@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Sidebar from './Sidebar';
 import Search from './Search';
@@ -21,12 +21,30 @@ export default function UniversalLayout({
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Load sidebar open state from sessionStorage on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedSidebarState = sessionStorage.getItem('sidebar-open');
+      if (savedSidebarState !== null) {
+        setSidebarOpen(JSON.parse(savedSidebarState));
+      }
+    }
+  }, []);
+
+  // Save sidebar open state to sessionStorage whenever it changes
+  const handleSidebarToggle = (open: boolean) => {
+    setSidebarOpen(open);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('sidebar-open', JSON.stringify(open));
+    }
+  };
+
   return (
     <div className={`min-h-screen bg-neutral-50 flex ${className}`}>
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
+        onClose={() => handleSidebarToggle(false)} 
         user={user}
       />
 
@@ -40,7 +58,7 @@ export default function UniversalLayout({
               {/* Left Section */}
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  onClick={() => handleSidebarToggle(!sidebarOpen)}
                   className="p-2 rounded-full hover:bg-neutral-100 transition-all duration-200 hover:scale-105 lg:hidden"
                 >
                   <svg className="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
