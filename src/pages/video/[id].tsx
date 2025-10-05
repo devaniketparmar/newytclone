@@ -53,6 +53,29 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
     }
   }, [user, video.id]);
 
+  // Record watch history (fire-and-forget)
+  useEffect(() => {
+    (async () => {
+      try {
+        await fetch('/api/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: video.id,
+            title: video.title,
+            thumbnailUrl: video.thumbnailUrl,
+            duration: video.duration,
+            viewCount: video.viewCount,
+            publishedAt: video.publishedAt,
+            channel: { id: video.channel.id, name: video.channel.name }
+          })
+        });
+      } catch (e) {
+        // ignore network errors
+      }
+    })();
+  }, [video.id]);
+
   const loadUserInteractionStatus = async () => {
     try {
       // Load like/dislike status

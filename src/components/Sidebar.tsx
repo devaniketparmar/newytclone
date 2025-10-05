@@ -382,10 +382,11 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
       <div className={`
         fixed top-0 left-0 h-full bg-white border-r border-neutral-200 z-50 transform transition-all duration-300 ease-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:z-auto lg:block
+        lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto lg:block lg:h-screen
         ${isCollapsed ? 'w-0 lg:w-0' : 'w-60 lg:w-60'} shadow-xl lg:shadow-none
       `}>
-        <div className={`flex flex-col h-full max-h-screen ${isCollapsed ? 'overflow-hidden' : ''}`}>
+        {/* make inner content scroll independently on large screens */}
+  <div className={`flex flex-col h-full max-h-screen ${isCollapsed ? 'overflow-hidden' : 'overflow-y-auto lg:overflow-y-auto'}`} style={{ WebkitOverflowScrolling: 'touch' }}>
           {!isCollapsed && (
             <>
               {/* Header */}
@@ -489,7 +490,8 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             <div className="mx-4 border-t border-neutral-200" />
 
             {/* Recent Videos Section */}
-            {!isCollapsed && (
+            {/* {!isCollapsed && ( */}
+            { false && (
               <div className="p-4">
                 <div className="px-4 py-2 mb-3">
                   <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
