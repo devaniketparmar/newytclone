@@ -18,18 +18,20 @@ interface NavigationItem {
 export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Load collapsed state from sessionStorage on component mount
+  // Load collapsed state from sessionStorage and handle hydration
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedCollapsedState = sessionStorage.getItem('sidebar-collapsed');
       if (savedCollapsedState !== null) {
         setIsCollapsed(JSON.parse(savedCollapsedState));
       }
+      setIsHydrated(true);
     }
   }, []);
 
@@ -83,13 +85,12 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
     {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       ),
       label: 'Trending',
       path: '/trending',
-      active: router.pathname === '/trending',
-      badge: 12
+      active: router.pathname === '/trending'
     },
     {
       icon: (
@@ -483,26 +484,26 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
                       {item.icon}
                     </span>
                     
-                    <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed ? 'hidden' : ''}`}>{item.label}</span>
+                    <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed && isHydrated ? 'hidden' : ''}`}>{item.label}</span>
                     
-                    {item.badge && !isCollapsed && (
+                    {item.badge && !isCollapsed && isHydrated && (
                       <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center shadow-sm relative z-10">
                         {item.badge > 99 ? '99+' : item.badge}
                       </span>
                     )}
                     
                     {/* Active indicator for expanded state */}
-                    {item.active && !isCollapsed && (
+                    {item.active && !isCollapsed && isHydrated && (
                       <div className="ml-auto w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-sm relative z-10"></div>
                     )}
                     
                     {/* Enhanced active indicator for collapsed state */}
-                    {item.active && isCollapsed && (
+                    {item.active && isCollapsed && isHydrated && (
                       <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-lg shadow-red-500/30"></div>
                     )}
                     
                     {/* Subtle pulse animation for active collapsed items */}
-                    {item.active && isCollapsed && (
+                    {item.active && isCollapsed && isHydrated && (
                       <div className="absolute inset-0 rounded-2xl bg-red-500/5 animate-pulse"></div>
                     )}
                   </button>
