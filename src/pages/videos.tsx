@@ -3,6 +3,7 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import SearchHeader from '@/components/SearchHeader';
 import UniversalLayout from '@/components/UniversalLayout';
+import CategoryBar from '@/components/CategoryBar';
 
 interface Video {
   id: string;
@@ -17,6 +18,7 @@ interface Video {
   createdAt: string;
   publishedAt: string;
   status: 'PROCESSING' | 'READY' | 'FAILED';
+  category?: string;
   channel: {
     id: string;
     name: string;
@@ -35,6 +37,91 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [filteredVideos, setFilteredVideos] = useState(videos || []);
+  const [loading, setLoading] = useState(false);
+
+  // Ensure user is defined
+  const currentUser = user || null;
+
+  const handleCategorySelect = async (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setLoading(true);
+
+    try {
+      // Make API call with category filter
+      const params = new URLSearchParams();
+      if (categoryId !== 'all') {
+        params.append('category', categoryId);
+      }
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+
+      const response = await fetch(`/api/videos?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setFilteredVideos(data.data || []);
+      } else {
+        // Fallback to client-side filtering if API fails
+        const clientFiltered = (videos || []).filter(video => {
+          const matchesSearch = searchQuery === '' ||
+            video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            video.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            video.channel.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+          const videoCategory = getVideoCategory(video);
+          const matchesCategory = categoryId === 'all' || videoCategory === categoryId;
+
+          return matchesSearch && matchesCategory;
+        });
+        setFilteredVideos(clientFiltered);
+      }
+    } catch (error) {
+      console.error('Error fetching videos by category:', error);
+      // Fallback to client-side filtering
+      const clientFiltered = (videos || []).filter(video => {
+        const matchesSearch = searchQuery === '' ||
+          video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          video.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          video.channel.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const videoCategory = getVideoCategory(video);
+        const matchesCategory = categoryId === 'all' || videoCategory === categoryId;
+
+        return matchesSearch && matchesCategory;
+      });
+      setFilteredVideos(clientFiltered);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to determine video category based on title/description
+  const getVideoCategory = (video: Video): string => {
+    if (video.category) {
+      return video.category;
+    }
+
+    // Auto-categorize based on title and description keywords
+    const text = `${video.title} ${video.description}`.toLowerCase();
+
+    if (text.includes('music') || text.includes('song') || text.includes('audio')) return 'music';
+    if (text.includes('game') || text.includes('gaming') || text.includes('play')) return 'gaming';
+    if (text.includes('news') || text.includes('breaking') || text.includes('update')) return 'news';
+    if (text.includes('sport') || text.includes('football') || text.includes('basketball')) return 'sports';
+    if (text.includes('learn') || text.includes('tutorial') || text.includes('course')) return 'education';
+    if (text.includes('funny') || text.includes('comedy') || text.includes('joke')) return 'comedy';
+    if (text.includes('tech') || text.includes('programming') || text.includes('code')) return 'technology';
+    if (text.includes('cook') || text.includes('recipe') || text.includes('food')) return 'cooking';
+    if (text.includes('travel') || text.includes('trip') || text.includes('vacation')) return 'travel';
+    if (text.includes('fitness') || text.includes('workout') || text.includes('exercise')) return 'fitness';
+    if (text.includes('art') || text.includes('draw') || text.includes('paint')) return 'art';
+    if (text.includes('science') || text.includes('research') || text.includes('experiment')) return 'science';
+    if (text.includes('business') || text.includes('finance') || text.includes('money')) return 'business';
+
+    return 'entertainment'; // Default category
+  };
 
   const formatViewCount = (count: number | undefined | null) => {
     if (!count || count === 0) {
@@ -61,27 +148,87 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
     return `${Math.floor(diffInSeconds / 31536000)} years ago`;
   };
 
-  const filteredVideos = (videos || []).filter(video =>
-    video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    video.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    video.channel.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    setLoading(true);
+
+    try {
+      // Make API call with search and category filters
+      const params = new URLSearchParams();
+      if (query) {
+        params.append('search', query);
+      }
+      if (selectedCategory !== 'all') {
+        params.append('category', selectedCategory);
+      }
+
+      const response = await fetch(`/api/videos?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setFilteredVideos(data.data || []);
+      } else {
+        // Fallback to client-side filtering
+        const clientFiltered = (videos || []).filter(video => {
+          const matchesSearch = query === '' ||
+            video.title.toLowerCase().includes(query.toLowerCase()) ||
+            video.description.toLowerCase().includes(query.toLowerCase()) ||
+            video.channel.name.toLowerCase().includes(query.toLowerCase());
+
+          const videoCategory = getVideoCategory(video);
+          const matchesCategory = selectedCategory === 'all' || videoCategory === selectedCategory;
+
+          return matchesSearch && matchesCategory;
+        });
+        setFilteredVideos(clientFiltered);
+      }
+    } catch (error) {
+      console.error('Error searching videos:', error);
+      // Fallback to client-side filtering
+      const clientFiltered = (videos || []).filter(video => {
+        const matchesSearch = query === '' ||
+          video.title.toLowerCase().includes(query.toLowerCase()) ||
+          video.description.toLowerCase().includes(query.toLowerCase()) ||
+          video.channel.name.toLowerCase().includes(query.toLowerCase());
+
+        const videoCategory = getVideoCategory(video);
+        const matchesCategory = selectedCategory === 'all' || videoCategory === selectedCategory;
+
+        return matchesSearch && matchesCategory;
+      });
+      setFilteredVideos(clientFiltered);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <UniversalLayout 
-      user={user}
+      user={currentUser}
+      showHeader={true}
       headerContent={
         <SearchHeader
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={handleSearch}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           showViewToggle={true}
         />
       }
     >
+      <CategoryBar 
+        onCategorySelect={handleCategorySelect}
+        defaultCategory={selectedCategory}
+      />
+      
       <div className="p-6">
-        {filteredVideos.length === 0 ? (
+        {loading && (
+          <div className="text-center py-16">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-neutral-600">Loading videos...</p>
+          </div>
+        )}
+        
+        {!loading && filteredVideos.length === 0 && (
           <div className="text-center py-16">
             <div className="w-24 h-24 bg-gradient-to-r from-primary-100 to-secondary-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-12 h-12 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,9 +239,9 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
               {(videos || []).length === 0 ? 'No videos yet' : 'No videos found'}
             </h3>
             <p className="text-neutral-600 mb-6">
-              {(videos || []).length === 0 ? 'Be the first to upload a video!' : 'Try adjusting your search terms'}
+              {(videos || []).length === 0 ? 'Be the first to upload a video!' : 'Try adjusting your search terms or category'}
             </p>
-            {user && (
+            {currentUser && (
               <button 
                 onClick={() => router.push('/upload')}
                 className="professional-button professional-button-primary"
@@ -106,20 +253,19 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
               </button>
             )}
           </div>
-        ) : (
-          <div className={`
-            ${viewMode === 'grid' 
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
-              : 'space-y-4'
-            }
-          `}>
+        )}
+        
+        {!loading && filteredVideos.length > 0 && (
+          <div className={viewMode === 'grid' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6' 
+            : 'space-y-4'
+          }>
             {filteredVideos.map((video) => (
               <div 
                 key={video.id} 
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group overflow-hidden"
+                className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden border border-neutral-100"
                 onClick={() => router.push(`/video/${video.id}`)}
               >
-                {/* Thumbnail */}
                 <div className="relative aspect-video bg-neutral-200 overflow-hidden">
                   {video.thumbnailUrl ? (
                     <img
@@ -138,12 +284,10 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
                     </div>
                   )}
                   
-                  {/* Duration Badge */}
                   <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
                     {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
                   </div>
                   
-                  {/* Status Badge */}
                   {video.status === 'PROCESSING' && (
                     <div className="absolute top-2 left-2 bg-warning-500 text-white text-xs px-2 py-1 rounded">
                       Processing
@@ -151,18 +295,17 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
                   )}
                 </div>
 
-                {/* Video Info */}
-                <div className="p-3">
-                  <h3 className="text-sm font-semibold text-neutral-900 mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
+                <div className="p-4">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors leading-tight">
                     {video.title}
                   </h3>
                   
                   <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-neutral-300 rounded-full flex-shrink-0">
+                    <div className="w-9 h-9 bg-neutral-200 rounded-full flex-shrink-0 overflow-hidden">
                       <img
-                        src={video.channel.avatarUrl || '/api/placeholder/32/32'}
+                        src={video.channel.avatarUrl || '/api/placeholder/36/36'}
                         alt={video.channel.name}
-                        className="w-full h-full rounded-full object-cover"
+                        className="w-full h-full object-cover"
                       />
                     </div>
                     
@@ -170,7 +313,7 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
                       <p className="text-sm font-medium text-neutral-900 truncate">
                         {video.channel.name}
                       </p>
-                      <div className="flex items-center space-x-2 text-xs text-neutral-500">
+                      <div className="flex items-center space-x-2 text-xs text-neutral-500 mt-1">
                         <span>{formatViewCount(video.viewCount)} views</span>
                         <span>•</span>
                         <span>{formatTimeAgo(video.publishedAt)}</span>
@@ -192,13 +335,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     // Fetch videos from the API
     const protocol = context.req.headers['x-forwarded-proto'] || 'http';
     const host = context.req.headers.host;
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://your-domain.com' 
+    const baseUrl = process.env.NODE_ENV === 'production'
+      ? 'https://your-domain.com'
       : `${protocol}://${host}`;
-    
+
     const videosResponse = await fetch(`${baseUrl}/api/videos`);
     let videos = [];
-    
+
     if (videosResponse.ok) {
       const videosData = await videosResponse.json();
       videos = videosData.data || [];
@@ -207,7 +350,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     // Try to get user data from cookies
     let user = null;
     const token = context.req.cookies.token;
-    
+
     if (token) {
       try {
         const userResponse = await fetch(`${baseUrl}/api/auth/me`, {
@@ -215,7 +358,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'Cookie': `token=${token}`
           }
         });
-        
+
         if (userResponse.ok) {
           const userData = await userResponse.json();
           user = userData.data.user;

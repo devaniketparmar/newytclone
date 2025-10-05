@@ -31,7 +31,7 @@ export default function UniversalLayout({
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col"> 
+      <div className="flex-1 flex flex-col transition-all duration-300 ease-out"> 
         {/* Universal Header */}
         {showHeader && (
           <header className="sticky top-0 z-30 main-header">
@@ -41,7 +41,7 @@ export default function UniversalLayout({
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 rounded-full hover:bg-neutral-100 transition-colors lg:hidden"
+                  className="p-2 rounded-full hover:bg-neutral-100 transition-all duration-200 hover:scale-105 lg:hidden"
                 >
                   <svg className="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />

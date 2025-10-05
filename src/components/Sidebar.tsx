@@ -373,8 +373,11 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-all duration-300 ease-out"
           onClick={onClose}
+          style={{
+            animation: 'fadeIn 0.3s ease-out'
+          }}
         />
       )}
 
@@ -384,9 +387,12 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto lg:block lg:h-screen
         ${isCollapsed ? 'w-0 lg:w-0' : 'w-60 lg:w-60'} shadow-xl lg:shadow-none
-      `}>
+      `}
+      style={{
+        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}>
         {/* make inner content scroll independently on large screens */}
-  <div className={`flex flex-col h-full max-h-screen ${isCollapsed ? 'overflow-hidden' : 'overflow-y-auto lg:overflow-y-auto'}`} style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className={`flex flex-col h-full max-h-screen transition-all duration-300 ease-out ${isCollapsed ? 'overflow-hidden opacity-0' : 'overflow-y-auto lg:overflow-y-auto opacity-100'}`} style={{ WebkitOverflowScrolling: 'touch' }}>
           {!isCollapsed && (
             <>
               {/* Header */}
@@ -782,6 +788,36 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
           </svg>
         </button>
       )}
+      
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes slideIn {
+          from {
+            transform: translateX(-100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes slideOut {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-100%);
+          }
+        }
+      `}</style>
     </>
   );
 }
