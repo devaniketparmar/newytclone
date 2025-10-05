@@ -49,10 +49,11 @@
   --error-500: #ef4444;
   --error-600: #dc2626;
 
-  /* Background Colors */
-  --background: #ffffff;
-  --background-secondary: #f8fafc;
-  --background-tertiary: #f1f5f9;
+  /* Background Colors - lighter theme */
+  --background: #fbfcfd; /* very light off-white */
+  --background-secondary: #f7fbfc; /* subtle cooler secondary */
+  --background-tertiary: #f1f6f8; /* slightly darker tertiary */
+  /* Foreground (primary text) - keep dark for readability on light backgrounds */
   --foreground: #0f172a;
   --foreground-secondary: #475569;
   --foreground-tertiary: #64748b;
@@ -93,7 +94,10 @@
   /* Transitions */
   --transition-fast: 150ms ease-in-out;
   --transition-normal: 250ms ease-in-out;
-  --transition-slow: 350ms ease-in-out;
+  --transition-slow: 350ms ease-in-out; 
+
+  /* Width */
+  --sb-width: 5px;
 }
 
 /* Dark Mode */
@@ -466,7 +470,6 @@ body {
   color: var(--foreground);
   margin-bottom: var(--space-sm);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -624,4 +627,25 @@ body {
     box-shadow: none;
     border: 1px solid #000;
   }
+}
+/* Manually added css */ 
+.main-header{
+  background-color: var(--neutral-50);
+}
+
+/* WebKit / Blink */
+*::-webkit-scrollbar {
+  width: var(--sb-width);
+  height: var(--sb-width); /* horizontal */
+}
+*::-webkit-scrollbar-track {
+  background: var(--sb-track);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(173, 173, 173);
+  border: 3px solid var(--sb-thumb-hover); /* creates padded look */
+}
+*::-webkit-scrollbar-thumb:hover {
+  transform: scale(1.02);
 }

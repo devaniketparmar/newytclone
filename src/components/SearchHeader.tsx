@@ -6,6 +6,7 @@ interface SearchHeaderProps {
   viewMode?: 'grid' | 'list';
   onViewModeChange?: (mode: 'grid' | 'list') => void;
   showViewToggle?: boolean;
+  compact?: boolean;
 }
 
 export default function SearchHeader({ 
@@ -14,11 +15,12 @@ export default function SearchHeader({
   viewMode = 'grid',
   onViewModeChange,
   showViewToggle = true
+  , compact = false
 }: SearchHeaderProps) {
   return (
     <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <svg className="h-5 w-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className={`absolute inset-y-0 left-0 ${compact ? 'pl-2' : 'pl-3'} flex items-center pointer-events-none`}>
+        <svg className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-neutral-400`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </div>
@@ -27,10 +29,10 @@ export default function SearchHeader({
         placeholder="Search"
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-l-full rounded-r-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        className={`w-full pl-${compact ? '9' : '10'} pr-4 ${compact ? 'py-1.5 text-sm' : 'py-2'} border border-neutral-300 rounded-l-full rounded-r-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
       />
-      <button className="absolute right-0 top-0 bottom-0 px-6 bg-neutral-100 border border-l-0 border-neutral-300 rounded-r-full hover:bg-neutral-200 transition-colors">
-        <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button className={`absolute right-0 top-0 bottom-0 ${compact ? 'px-4' : 'px-6'} bg-neutral-100 border border-l-0 border-neutral-300 rounded-r-full hover:bg-neutral-200 transition-colors`}>
+        <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-neutral-600`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </button>

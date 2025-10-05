@@ -387,9 +387,11 @@ export const getServerSideProps = async (context: any) => {
     }
 
     // Fetch video data
+    const protocol = context.req.headers['x-forwarded-proto'] || 'http';
+    const host = context.req.headers.host;
     const baseUrl = process.env.NODE_ENV === 'production' 
       ? 'https://your-domain.com' 
-      : 'http://localhost:3000';
+      : `${protocol}://${host}`;
 
     const videoResponse = await fetch(`${baseUrl}/api/videos/${id}`, {
       headers: {

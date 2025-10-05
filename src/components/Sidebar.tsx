@@ -383,105 +383,102 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
         fixed top-0 left-0 h-full bg-white border-r border-neutral-200 z-50 transform transition-all duration-300 ease-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:z-auto lg:block
-        w-80 lg:w-80 shadow-xl lg:shadow-none
+        ${isCollapsed ? 'w-0 lg:w-0' : 'w-60 lg:w-60'} shadow-xl lg:shadow-none
       `}>
-        <div className="flex flex-col h-full max-h-screen">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-neutral-200 bg-white">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-              </div>
-              <span className="text-xl font-bold text-neutral-900">YouTube</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="hidden lg:flex p-2 rounded-xl hover:bg-neutral-100 transition-colors duration-200"
-                title="Collapse sidebar"
-              >
-                <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={onClose}
-                className="lg:hidden p-2 rounded-xl hover:bg-neutral-100 transition-colors duration-200"
-              >
-                <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="p-4 border-b border-neutral-200 bg-neutral-50">
-            <form onSubmit={handleSearch} className="relative">
-              <div className="relative">
-                <input
-                  ref={searchRef}
-                  type="text"
-                  placeholder="Search videos... (Press / to focus)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
-                />
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                {searchQuery && (
+        <div className={`flex flex-col h-full max-h-screen ${isCollapsed ? 'overflow-hidden' : ''}`}>
+          {!isCollapsed && (
+            <>
+              {/* Header */}
+              <div className="flex items-center bg-gradient-to-r from-white to-neutral-50 p-2 justify-between"> 
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                  </div>
+                  <span className="text-xl font-bold text-neutral-900">YouTube</span>
+                </div>
+                <div className="flex items-center space-x-2">
                   <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400 hover:text-neutral-600"
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="hidden lg:flex p-2 rounded-xl hover:bg-neutral-100 transition-colors duration-200"
+                    title="Hide sidebar"
                   >
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="lg:hidden p-2 rounded-xl hover:bg-neutral-100 transition-colors duration-200"
+                  >
+                    <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
-                )}
+                </div>
               </div>
-            </form>
-          </div>
 
           {/* Navigation */}
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent hover:scrollbar-thumb-neutral-400 scroll-smooth">
             {/* Main Navigation */}
-            <div className="p-4">
-              <div className="space-y-1">
+            <div className={isCollapsed ? 'p-3' : 'p-4'}>
+              <div className={isCollapsed ? 'space-y-3' : 'space-y-1'}>
                 {mainNavigationItems.map((item, index) => (
                   <button
                     key={index}
                     onClick={() => handleNavigation(item.path)}
                     className={`
-                      w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-left transition-all duration-200 group relative
+                      w-full flex items-center ${isCollapsed ? 'justify-center px-4 py-4' : 'space-x-4 px-4 py-3'} rounded-2xl text-left transition-all duration-300 group relative overflow-hidden
                       ${item.active 
-                        ? 'bg-red-50 text-red-700 font-semibold shadow-sm' 
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                        ? isCollapsed 
+                          ? 'bg-gradient-to-br from-red-50 to-red-100 text-red-700 font-semibold shadow-lg shadow-red-100/50 border border-red-200/50' 
+                          : 'bg-red-50 text-red-700 font-semibold shadow-sm'
+                        : isCollapsed
+                          ? 'text-neutral-600 hover:bg-gradient-to-br hover:from-neutral-50 hover:to-neutral-100 hover:text-neutral-800 hover:shadow-md hover:shadow-neutral-100/50 hover:border hover:border-neutral-200/50'
+                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
                       }
+                      ${isCollapsed ? 'hover:scale-110 hover:-translate-y-0.5' : ''}
                     `}
                     title={item.label}
                   >
+                    {/* Background glow effect for active items */}
+                    {item.active && isCollapsed && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-red-400/10 to-red-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    )}
+                    
                     <span className={`
-                      transition-colors duration-200 flex-shrink-0
+                      transition-all duration-300 flex-shrink-0 relative z-10 ${isCollapsed ? 'w-7 h-7' : ''}
                       ${item.active 
-                        ? 'text-red-600' 
-                        : 'text-neutral-500 group-hover:text-neutral-700'
+                        ? 'text-red-600 drop-shadow-sm' 
+                        : 'text-neutral-500 group-hover:text-neutral-700 group-hover:drop-shadow-sm'
                       }
+                      ${isCollapsed ? 'group-hover:scale-110' : ''}
                     `}>
                       {item.icon}
                     </span>
-                    <span className="text-sm font-medium flex-1 truncate">{item.label}</span>
-                    {item.badge && (
-                      <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center">
+                    
+                    <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed ? 'hidden' : ''}`}>{item.label}</span>
+                    
+                    {item.badge && !isCollapsed && (
+                      <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center shadow-sm relative z-10">
                         {item.badge > 99 ? '99+' : item.badge}
                       </span>
                     )}
-                    {item.active && (
-                      <div className="ml-auto w-1 h-6 bg-red-600 rounded-full"></div>
+                    
+                    {/* Active indicator for expanded state */}
+                    {item.active && !isCollapsed && (
+                      <div className="ml-auto w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-sm relative z-10"></div>
+                    )}
+                    
+                    {/* Enhanced active indicator for collapsed state */}
+                    {item.active && isCollapsed && (
+                      <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-lg shadow-red-500/30"></div>
+                    )}
+                    
+                    {/* Subtle pulse animation for active collapsed items */}
+                    {item.active && isCollapsed && (
+                      <div className="absolute inset-0 rounded-2xl bg-red-500/5 animate-pulse"></div>
                     )}
                   </button>
                 ))}
@@ -492,61 +489,66 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             <div className="mx-4 border-t border-neutral-200" />
 
             {/* Recent Videos Section */}
-            <div className="p-4">
-              <div className="px-4 py-2 mb-2">
-                <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Recent Videos
-                </h3>
-              </div>
-              <div className="space-y-3">
+            {!isCollapsed && (
+              <div className="p-4">
+                <div className="px-4 py-2 mb-3">
+                  <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Recent Videos
+                  </h3>
+                </div>
+              <div className="space-y-2">
                 {recentVideos.map((video, index) => (
                   <div key={index} className="flex space-x-3 p-2 rounded-lg hover:bg-neutral-50 transition-colors duration-200 cursor-pointer group">
-                    <div className="relative w-20 h-12 bg-neutral-200 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="relative w-16 h-10 bg-neutral-200 rounded-md overflow-hidden flex-shrink-0">
                       <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-red-600 opacity-80"></div>
-                      <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 rounded">
+                      <div className="absolute bottom-0.5 right-0.5 bg-black/80 text-white text-xs px-1 rounded text-[10px]">
                         {video.duration}
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors duration-200">
+                      <h4 className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors duration-200 leading-tight">
                         {video.title}
                       </h4>
-                      <p className="text-xs text-gray-700 mt-1 truncate">{video.channel}</p>
-                      <p className="text-xs text-gray-600">{video.views} views</p>
+                      <p className="text-xs text-gray-600 mt-0.5 truncate">{video.channel}</p>
+                      <p className="text-xs text-gray-500">{video.views} views</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+              </div>
+            )}
 
             {/* Divider */}
             <div className="mx-4 border-t border-neutral-200" />
-
             {/* User Profile Section */}
-            {user && (
-              <div className="p-4 border-b border-neutral-200 bg-gradient-to-r from-red-50 to-orange-50">
+            {false && (
+              <div className={`border-b border-neutral-200 bg-gradient-to-r from-red-50 to-orange-50 ${isCollapsed ? 'p-3' : 'p-4'}`}>
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center space-x-3 w-full p-3 rounded-xl hover:bg-white/50 transition-colors duration-200"
+                    className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} w-full p-3 rounded-xl hover:bg-white/50 transition-colors duration-200`}
                   >
                     <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold">
                       {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
-                    <div className="flex-1 text-left">
-                      <div className="text-sm font-semibold text-gray-900 truncate">
-                        {user.name || 'User'}
+                    {!isCollapsed && (
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-semibold text-gray-900 truncate">
+                          {user.name || 'User'}
+                        </div>
+                        <div className="text-xs text-gray-700 truncate">
+                          {user.email || 'user@example.com'}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-700 truncate">
-                        {user.email || 'user@example.com'}
-                      </div>
-                    </div>
-                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    )}
+                    {!isCollapsed && (
+                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
                   </button>
                   
-                  {showUserMenu && (
+                  {showUserMenu && !isCollapsed && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 rounded-xl shadow-lg z-50">
                       <div className="p-2">
                         <button className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200">
@@ -566,38 +568,65 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             )}
 
             {/* User Section */}
-            {user && (
-              <div className="p-4">
-                <div className="px-4 py-2 mb-2">
-                  <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    You
-                  </h3>
-                </div>
-                <div className="space-y-1">
+            {false && (
+              <div className={isCollapsed ? 'p-3' : 'p-4'}>
+                {!isCollapsed && (
+                  <div className="px-4 py-2 mb-2">
+                    <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      You
+                    </h3>
+                  </div>
+                )}
+                <div className={isCollapsed ? 'space-y-3' : 'space-y-1'}>
                   {userItems.map((item, index) => (
                     <button
                       key={index}
                       onClick={() => handleNavigation(item.path)}
                       className={`
-                        w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-left transition-all duration-200 group
+                        w-full flex items-center ${isCollapsed ? 'justify-center px-4 py-4' : 'space-x-4 px-4 py-3'} rounded-2xl text-left transition-all duration-300 group relative overflow-hidden
                         ${item.active 
-                          ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 font-semibold shadow-sm' 
-                          : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'
+                          ? isCollapsed 
+                            ? 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 font-semibold shadow-lg shadow-blue-100/50 border border-blue-200/50' 
+                            : 'bg-red-50 text-red-700 font-semibold shadow-sm'
+                          : isCollapsed
+                            ? 'text-neutral-600 hover:bg-gradient-to-br hover:from-neutral-50 hover:to-neutral-100 hover:text-neutral-800 hover:shadow-md hover:shadow-neutral-100/50 hover:border hover:border-neutral-200/50'
+                            : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
                         }
+                        ${isCollapsed ? 'hover:scale-110 hover:-translate-y-0.5' : ''}
                       `}
+                      title={item.label}
                     >
+                      {/* Background glow effect for active items */}
+                      {item.active && isCollapsed && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-blue-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      )}
+                      
                       <span className={`
-                        transition-colors duration-200
+                        transition-all duration-300 flex-shrink-0 relative z-10 ${isCollapsed ? 'w-7 h-7' : ''}
                         ${item.active 
-                          ? 'text-red-600 dark:text-red-400' 
-                          : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-200'
+                          ? 'text-blue-600 drop-shadow-sm' 
+                          : 'text-neutral-500 group-hover:text-neutral-700 group-hover:drop-shadow-sm'
                         }
+                        ${isCollapsed ? 'group-hover:scale-110' : ''}
                       `}>
                         {item.icon}
                       </span>
-                      <span className="text-sm font-medium">{item.label}</span>
-                      {item.active && (
-                        <div className="ml-auto w-1 h-6 bg-red-600 rounded-full"></div>
+                      
+                      <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed ? 'hidden' : ''}`}>{item.label}</span>
+                      
+                      {/* Active indicator for expanded state */}
+                      {item.active && !isCollapsed && (
+                        <div className="ml-auto w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-sm relative z-10"></div>
+                      )}
+                      
+                      {/* Enhanced active indicator for collapsed state */}
+                      {item.active && isCollapsed && (
+                        <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full shadow-lg shadow-blue-500/30"></div>
+                      )}
+                      
+                      {/* Subtle pulse animation for active collapsed items */}
+                      {item.active && isCollapsed && (
+                        <div className="absolute inset-0 rounded-2xl bg-blue-500/5 animate-pulse"></div>
                       )}
                     </button>
                   ))}
@@ -606,40 +635,67 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             )}
 
             {/* Divider */}
-            <div className="mx-4 border-t border-neutral-200" />
+            <div className={`border-t border-neutral-200 ${isCollapsed ? 'mx-2' : 'mx-4'}`} />
 
             {/* Explore Section */}
-            <div className="p-4">
-              <div className="px-4 py-2 mb-2">
-                <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-                  Explore
-                </h3>
-              </div>
-              <div className="space-y-1">
+            <div className={isCollapsed ? 'p-3' : 'p-4'}>
+              {!isCollapsed && (
+                <div className="px-4 py-2 mb-2">
+                  <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                    Explore
+                  </h3>
+                </div>
+              )}
+              <div className={isCollapsed ? 'space-y-3' : 'space-y-1'}>
                 {exploreItems.map((item, index) => (
                   <button
                     key={index}
                     onClick={() => handleNavigation(item.path)}
                     className={`
-                      w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-left transition-all duration-200 group
+                      w-full flex items-center ${isCollapsed ? 'justify-center px-4 py-4' : 'space-x-4 px-4 py-3'} rounded-2xl text-left transition-all duration-300 group relative overflow-hidden
                       ${item.active 
-                        ? 'bg-red-50 text-red-700 font-semibold shadow-sm' 
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                        ? isCollapsed 
+                          ? 'bg-gradient-to-br from-green-50 to-green-100 text-green-700 font-semibold shadow-lg shadow-green-100/50 border border-green-200/50' 
+                          : 'bg-red-50 text-red-700 font-semibold shadow-sm'
+                        : isCollapsed
+                          ? 'text-neutral-600 hover:bg-gradient-to-br hover:from-neutral-50 hover:to-neutral-100 hover:text-neutral-800 hover:shadow-md hover:shadow-neutral-100/50 hover:border hover:border-neutral-200/50'
+                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
                       }
+                      ${isCollapsed ? 'hover:scale-110 hover:-translate-y-0.5' : ''}
                     `}
+                    title={item.label}
                   >
+                    {/* Background glow effect for active items */}
+                    {item.active && isCollapsed && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-green-400/10 to-green-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    )}
+                    
                     <span className={`
-                      transition-colors duration-200
+                      transition-all duration-300 flex-shrink-0 relative z-10 ${isCollapsed ? 'w-7 h-7' : ''}
                       ${item.active 
-                        ? 'text-red-600' 
-                        : 'text-neutral-500 group-hover:text-neutral-700'
+                        ? 'text-green-600 drop-shadow-sm' 
+                        : 'text-neutral-500 group-hover:text-neutral-700 group-hover:drop-shadow-sm'
                       }
+                      ${isCollapsed ? 'group-hover:scale-110' : ''}
                     `}>
                       {item.icon}
                     </span>
-                    <span className="text-sm font-medium">{item.label}</span>
-                    {item.active && (
-                      <div className="ml-auto w-1 h-6 bg-red-600 rounded-full"></div>
+                    
+                    <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed ? 'hidden' : ''}`}>{item.label}</span>
+                    
+                    {/* Active indicator for expanded state */}
+                    {item.active && !isCollapsed && (
+                      <div className="ml-auto w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-sm relative z-10"></div>
+                    )}
+                    
+                    {/* Enhanced active indicator for collapsed state */}
+                    {item.active && isCollapsed && (
+                      <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-green-500 to-green-600 rounded-full shadow-lg shadow-green-500/30"></div>
+                    )}
+                    
+                    {/* Subtle pulse animation for active collapsed items */}
+                    {item.active && isCollapsed && (
+                      <div className="absolute inset-0 rounded-2xl bg-green-500/5 animate-pulse"></div>
                     )}
                   </button>
                 ))}
@@ -707,8 +763,23 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
               </div>
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Hamburger Menu Button - Show when sidebar is hidden */}
+      {isCollapsed && (
+        <button
+          onClick={() => setIsCollapsed(false)}
+          className="fixed top-1 left-4 z-50 lg:flex hidden p-2 bg-white rounded-xl shadow-lg border border-neutral-200 hover:bg-neutral-50 transition-all duration-200 hover:scale-105"
+          title="Show sidebar"
+        >
+          <svg className="w-6 h-6 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      )}
     </>
   );
 }

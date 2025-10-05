@@ -25,7 +25,7 @@ export default function VideoPlayer({ videoUrl, title, thumbnailUrl, className =
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [currentQuality, setCurrentQuality] = useState('Auto');
   const [isPictureInPicture, setIsPictureInPicture] = useState(false);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const qualityOptions = ['Auto', '1080p', '720p', '480p', '360p', '240p'];
 
@@ -262,7 +262,7 @@ export default function VideoPlayer({ videoUrl, title, thumbnailUrl, className =
   return (
     <div 
       ref={containerRef}
-      className={`relative bg-black rounded-xl overflow-hidden group ${isTheaterMode ? 'theater-mode' : ''} ${className}`}
+      className={`relative rounded-xl overflow-hidden group ${isTheaterMode ? 'theater-mode' : ''} ${className}`}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >

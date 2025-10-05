@@ -607,7 +607,7 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
   }, [newComment]);
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+    <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200 mt-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
@@ -765,7 +765,7 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
                       <span>Pinned by creator</span>
                     </div>
                   )}
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm font-semibold text-gray-900 truncate">
                     {comment.user.name}
                   </span>
                   <span className="text-xs text-gray-500">
@@ -814,7 +814,7 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-800 mb-2 whitespace-pre-wrap">
+                  <p className="text-sm text-gray-800 mb-2 whitespace-pre-wrap line-clamp-4">
                     {comment.content}
                   </p>
                 )}
@@ -984,7 +984,7 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center space-x-2 mb-1">
-                                  <span className="text-sm font-semibold text-gray-900">
+                                  <span className="text-sm font-semibold text-gray-900 truncate">
                                     {reply.user.name}
                                   </span>
                                   <span className="text-xs text-gray-500">
@@ -1033,7 +1033,7 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
                                     </div>
                                   </div>
                                 ) : (
-                                  <p className="text-sm text-gray-800 mb-2 whitespace-pre-wrap leading-relaxed">
+                                  <p className="text-sm text-gray-800 mb-2 whitespace-pre-wrap leading-relaxed line-clamp-3">
                                     {reply.content}
                                   </p>
                                 )}

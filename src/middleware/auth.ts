@@ -188,7 +188,7 @@ export function withCORS<T extends NextApiRequest = NextApiRequest>(
   } = {}
 ) {
   const {
-    origin = process.env.NEXTAUTH_URL || 'http://localhost:3000',
+    origin = process.env.NEXTAUTH_URL || process.env.BASE_URL || 'http://localhost:3000',
     methods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders = ['Content-Type', 'Authorization']
   } = options;

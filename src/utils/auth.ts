@@ -182,7 +182,7 @@ export class EmailVerificationUtils {
   }
 
   static generateVerificationUrl(token: string): string {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.BASE_URL || 'http://localhost:3000';
     return `${baseUrl}/auth/verify-email?token=${token}`;
   }
 
@@ -199,7 +199,7 @@ export class PasswordResetUtils {
   }
 
   static generateResetUrl(token: string): string {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.BASE_URL || 'http://localhost:3000';
     return `${baseUrl}/auth/reset-password?token=${token}`;
   }
 
