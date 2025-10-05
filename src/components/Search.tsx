@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import LoadingPlaceholder from './LoadingPlaceholder';
 
 interface SearchResult {
   id: string;
@@ -134,8 +135,8 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      setPage(1);
-      performSearch(query, 1, true);
+      // Perform actual search and show results
+      performSearch(query.trim(), 1, true);
       setShowResults(true);
       if (onSearch) {
         onSearch(query);
@@ -149,21 +150,71 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
     setQuery(value);
     
     if (value.trim()) {
-      // Show suggestions as user types
-      performSearch(value, 1, true);
+      // Only fetch suggestions, not video results
+      fetchSuggestionsOnly(value.trim());
       setShowResults(true);
     } else {
+      setSuggestions([]);
       setResults([]);
       setShowResults(false);
+    }
+  };
+
+  // Fetch search suggestions and top videos
+  const fetchSuggestions = async (query: string) => {
+    try {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=1&limit=5`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setSuggestions(data.data.suggestions || []);
+          // Set top 5 most relevant videos for suggestions
+          setResults(data.data.videos || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+    }
+  };
+
+  // Handle key press - Only search on Enter key
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (query.trim()) {
+        // Perform actual search and show results
+        performSearch(query.trim(), 1, true);
+        setShowResults(true);
+        if (onSearch) {
+          onSearch(query);
+        }
+      }
+    }
+  };
+
+  // Fetch only suggestions (no video results)
+  const fetchSuggestionsOnly = async (query: string) => {
+    try {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=1&limit=5`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setSuggestions(data.data.suggestions || []);
+          // Don't set video results - only show suggestions
+          setResults([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
     }
   };
 
   // Handle suggestion click
   const handleSuggestionClick = (suggestion: {type: string, text: string}) => {
     setQuery(suggestion.text);
-    setPage(1);
-    performSearch(suggestion.text, 1, true);
-    setShowResults(true);
+    setShowResults(false);
+    // Navigate to dedicated search page
+    router.push(`/search?q=${encodeURIComponent(suggestion.text)}`);
     if (onSearch) {
       onSearch(suggestion.text);
     }
@@ -253,11 +304,19 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
             type="text"
             value={query}
             onChange={handleInputChange}
+            onKeyPress={handleKeyPress}
             placeholder={placeholder}
-            className={`w-full pl-${compact ? '10' : '12'} pr-4 ${compact ? 'py-2 text-sm' : 'py-3'} border border-neutral-300 rounded-l-full rounded-r-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 text-gray-900`}
+            className={`w-full pl-${compact ? '10' : '12'} pr-4 ${compact ? 'py-2 text-sm' : 'py-3'} border border-neutral-300 rounded-l-full rounded-r-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500`}
           />
           <button
             type="submit"
+            onClick={() => {
+              if (query.trim()) {
+                // Perform actual search and show results
+                performSearch(query.trim(), 1, true);
+                setShowResults(true);
+              }
+            }}
             className={`absolute right-0 top-0 bottom-0 ${compact ? 'px-4' : 'px-6'} bg-neutral-100 border border-l-0 border-neutral-300 rounded-r-full hover:bg-neutral-200 transition-colors`}
           >
             <svg className={`w-4 h-4 ${compact ? 'text-gray-700' : 'text-gray-800'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -271,44 +330,44 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
       {showResults && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
           {loading && results.length === 0 ? (
-            <div className="p-4 text-center">
-              <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-gray-800">Searching...</p>
+            <div className="p-3">
+              <LoadingPlaceholder type="search" count={5} />
             </div>
           ) : results.length === 0 ? (
-            <div className="p-4 text-center text-gray-700">
+            <div className="p-4 text-center text-gray-900">
               <p>No results found for "{query}"</p>
             </div>
           ) : (
             <>
-              {/* Suggestions */}
-              {suggestions.length > 0 && (
+              {/* Query Suggestions - Only show when typing, not when search results are shown */}
+              {suggestions.length > 0 && results.length === 0 && (
                 <div className="border-b border-neutral-200 p-3">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Suggestions</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Search suggestions</h4>
                   <div className="space-y-1">
-                    {suggestions.map((suggestion, index) => (
+                    {suggestions.slice(0, 3).map((suggestion, index) => (
                       <button
                         key={index}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex items-center"
                       >
+                        <svg className="w-4 h-4 text-gray-700 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
                         <span className="font-medium">{suggestion.text}</span>
-                        <span className="ml-2 text-xs text-gray-600">
-                          {suggestion.type === 'video' ? 'Video' : 'Channel'}
-                        </span>
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Results */}
-              <div className="p-3">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">
-                  Search Results ({results.length})
-                </h4>
-                <div className="space-y-3">
-                  {results.map((video) => (
+              {/* Top 5 Most Relevant Videos - Only show when search is performed */}
+              {results.length > 0 && (
+                <div className="p-3">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                    Top results for "{query}"
+                  </h4>
+                  <div className="space-y-3">
+                    {results.slice(0, 5).map((video) => (
                     <div
                       key={video.id}
                       onClick={() => router.push(`/video/${video.id}`)}
@@ -336,10 +395,10 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
                         <h5 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
                           {video.title}
                         </h5>
-                        <p className="text-xs text-gray-700 mb-1">
+                        <p className="text-xs text-gray-900 mb-1">
                           {video.channel.name} • {formatViewCount(video.viewCount)} views • {formatTimeAgo(video.publishedAt)}
                         </p>
-                        <p className="text-xs text-gray-600 line-clamp-1">
+                        <p className="text-xs text-gray-900 line-clamp-1">
                           {video.description}
                         </p>
                       </div>
@@ -347,19 +406,17 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
                   ))}
                 </div>
 
-                {/* Load More */}
-                {hasMore && (
-                  <div className="text-center mt-3 pt-3 border-t border-neutral-200">
-                    <button
-                      onClick={loadMore}
-                      disabled={loading}
-                      className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors text-sm font-medium"
-                    >
-                      {loading ? 'Loading...' : 'Load More'}
-                    </button>
-                  </div>
-                )}
-              </div>
+                {/* Show all results button */}
+                <div className="text-center mt-3 pt-3 border-t border-neutral-200">
+                  <button
+                    onClick={() => router.push(`/search?q=${encodeURIComponent(query)}`)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                  >
+                    Show all results for "{query}"
+                  </button>
+                </div>
+                </div>
+              )}
             </>
           )}
         </div>

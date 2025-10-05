@@ -129,7 +129,7 @@ async function handleSubscribe(req: NextApiRequest, res: NextApiResponse, channe
       success: true,
       data: {
         subscribed: true,
-        subscriberCount: channel.subscriberCount + 1
+        subscriberCount: Number(channel.subscriberCount) + 1
       }
     });
 
@@ -217,7 +217,7 @@ async function handleUnsubscribe(req: NextApiRequest, res: NextApiResponse, chan
       success: true,
       data: {
         subscribed: false,
-        subscriberCount: Math.max(0, channel.subscriberCount - 1)
+        subscriberCount: Math.max(0, Number(channel.subscriberCount) - 1)
       }
     });
 
@@ -285,7 +285,7 @@ async function handleGetSubscriptionStatus(req: NextApiRequest, res: NextApiResp
       success: true,
       data: {
         subscribed: isSubscribed,
-        subscriberCount: channel.subscriberCount
+        subscriberCount: Number(channel.subscriberCount)
       }
     });
 

@@ -4,6 +4,7 @@ import UniversalLayout from '@/components/UniversalLayout';
 import VideoPlayer from '@/components/VideoPlayer';
 import VideoCard from '@/components/VideoCard';
 import Comments from '@/components/Comments';
+import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 
 interface Video {
   id: string;
@@ -357,17 +358,20 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
                   </div>
                 </div>
                 
-                <button 
-                  onClick={handleSubscribe}
-                  disabled={loading}
-                  className={`px-4 py-2 rounded-full font-medium text-sm transition-all duration-200 ${
-                    isSubscribed 
-                      ? 'bg-neutral-200 text-neutral-800 hover:bg-neutral-300' 
-                      : 'bg-red-600 text-white hover:bg-red-700'
-                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
-                </button>
+                {/* Only show Subscribe button if user is not the video owner */}
+                {user && user.id !== video.channel.userId && (
+                  <button 
+                    onClick={handleSubscribe}
+                    disabled={loading}
+                    className={`px-4 py-2 rounded-full font-medium text-sm transition-all duration-200 ${
+                      isSubscribed 
+                        ? 'bg-neutral-200 text-neutral-800 hover:bg-neutral-300' 
+                        : 'bg-red-600 text-white hover:bg-red-700'
+                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                  </button>
+                )}
               </div>
 
               {/* Description */}

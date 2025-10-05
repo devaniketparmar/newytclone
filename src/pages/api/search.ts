@@ -159,7 +159,7 @@ async function handleSearch(req: NextApiRequest, res: NextApiResponse) {
       thumbnailUrl: video.thumbnailUrl,
       videoUrl: video.videoUrl,
       duration: video.duration,
-      viewCount: video.viewCount,
+      viewCount: Number(video.viewCount),
       likeCount: video.likeCount,
       commentCount: video.commentCount,
       createdAt: video.createdAt,
@@ -169,7 +169,7 @@ async function handleSearch(req: NextApiRequest, res: NextApiResponse) {
         id: video.channel.id,
         name: video.channel.name,
         avatarUrl: video.channel.avatarUrl,
-        subscriberCount: video.channel.subscriberCount,
+        subscriberCount: Number(video.channel.subscriberCount),
         userId: video.channel.userId
       },
       category: video.category ? {

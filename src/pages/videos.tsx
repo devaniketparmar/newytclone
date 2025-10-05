@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import SearchHeader from '@/components/SearchHeader';
 import UniversalLayout from '@/components/UniversalLayout';
 import CategoryBar from '@/components/CategoryBar';
+import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 
 interface Video {
   id: string;
@@ -222,9 +223,13 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
       
       <div className="p-6">
         {loading && (
-          <div className="text-center py-16">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-neutral-600">Loading videos...</p>
+          <div className={viewMode === 'grid' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6' 
+            : 'space-y-4'
+          }>
+            {Array.from({ length: 8 }).map((_, index) => (
+              <LoadingPlaceholder key={index} type="video-card" />
+            ))}
           </div>
         )}
         

@@ -594,7 +594,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             )}
 
             {/* User Section */}
-            {false && (
+            {userItems && (
               <div className={isCollapsed ? 'p-3' : 'p-4'}>
                 {!isCollapsed && (
                   <div className="px-4 py-2 mb-2">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import LoadingPlaceholder from './LoadingPlaceholder';
 
 interface Comment {
   id: string;
@@ -738,10 +739,7 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
       {/* Comments List */}
       <div className="space-y-4">
         {loading && comments.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <p className="text-gray-800">Loading comments...</p>
-          </div>
+          <LoadingPlaceholder type="comment" count={5} />
         ) : comments.length === 0 ? (
           <div className="text-center py-8 text-gray-700">
             <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
