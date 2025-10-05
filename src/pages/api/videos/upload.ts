@@ -6,6 +6,7 @@ import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import { ThumbnailGenerator } from '../../../utils/thumbnailGenerator';
+import { createOrUpdateHashtags } from '../../../utils/hashtagUtils';
 
 // Disable body parsing for file uploads
 export const config = {
@@ -95,7 +96,7 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
     const description = Array.isArray(fields.description) ? fields.description[0] : fields.description || '';
     const category = Array.isArray(fields.category) ? fields.category[0] : fields.category || 'Entertainment';
     const privacy = Array.isArray(fields.privacy) ? fields.privacy[0] : fields.privacy || 'public';
-    const tags = Array.isArray(fields.tags) ? fields.tags[0] : fields.tags || '';
+    const hashtags = Array.isArray(fields.hashtags) ? fields.hashtags[0] : fields.hashtags || '[]';
     const language = Array.isArray(fields.language) ? fields.language[0] : fields.language || 'en';
     const scheduledAt = Array.isArray(fields.scheduledAt) ? fields.scheduledAt[0] : fields.scheduledAt;
     const ageRestriction = Array.isArray(fields.ageRestriction) ? fields.ageRestriction[0] === 'true' : false;
@@ -313,7 +314,7 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
           fileType: videoFile.mimetype,
           uploadDate: new Date().toISOString(),
           language: language,
-          tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0),
+          hashtags: JSON.parse(hashtags),
           ageRestriction: ageRestriction,
           commentsEnabled: commentsEnabled,
           monetizationEnabled: monetizationEnabled,
@@ -343,6 +344,17 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
       where: { id: channel.id },
       data: { videoCount: { increment: 1 } }
     });
+
+    // Process hashtags
+    try {
+      const hashtagArray = JSON.parse(hashtags);
+      if (hashtagArray && hashtagArray.length > 0) {
+        await createOrUpdateHashtags(video.id, hashtagArray);
+      }
+    } catch (error) {
+      console.error('Error processing hashtags:', error);
+      // Don't fail the upload if hashtag processing fails
+    }
 
     // TODO: Queue video processing job
     // In production, this would:

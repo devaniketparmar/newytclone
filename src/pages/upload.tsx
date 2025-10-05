@@ -1,12 +1,13 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
+import SmartHashtagInput from '@/components/SmartHashtagInput';
 
 interface UploadFormData {
   title: string;
   description: string;
   category: string;
   privacy: 'public' | 'unlisted' | 'private';
-  tags: string;
+  hashtags: string[];
   language: string;
   scheduledAt?: string;
   ageRestriction: boolean;
@@ -36,7 +37,7 @@ export default function UploadPage() {
     description: '',
     category: 'Entertainment',
     privacy: 'public',
-    tags: '',
+    hashtags: [],
     language: 'en',
     scheduledAt: '',
     ageRestriction: false,
@@ -215,7 +216,7 @@ export default function UploadPage() {
       uploadData.append('description', formData.description);
       uploadData.append('category', formData.category);
       uploadData.append('privacy', formData.privacy);
-      uploadData.append('tags', formData.tags);
+      uploadData.append('hashtags', JSON.stringify(formData.hashtags));
       uploadData.append('language', formData.language);
       uploadData.append('ageRestriction', formData.ageRestriction.toString());
       uploadData.append('commentsEnabled', formData.commentsEnabled.toString());
@@ -549,19 +550,22 @@ export default function UploadPage() {
 
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-3">
-                  Tags
+                  Hashtags
                 </label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-gray-900 font-medium"
-                  placeholder="Enter tags separated by commas"
+                <SmartHashtagInput
+                  value={formData.hashtags}
+                  onChange={(hashtags) => setFormData(prev => ({ ...prev, hashtags }))}
+                  placeholder="Add hashtags to help people discover your video..."
+                  maxHashtags={10}
+                  showRecommendations={true}
+                  videoContent={{
+                    title: formData.title,
+                    description: formData.description,
+                    category: formData.category,
+                    duration: 0, // We don't have duration yet during upload
+                  }}
+                  className="w-full"
                 />
-                <p className="text-sm text-gray-700 mt-2 font-medium">
-                  Add tags to help people discover your video (max 15 tags)
-                </p>
               </div>
             </div>
 
