@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import SubscriptionButton from './SubscriptionButton';
 
 interface VideoCardProps {
   video: {
@@ -28,6 +29,8 @@ interface VideoCardProps {
   onDelete?: (videoId: string, e: React.MouseEvent) => void;
   deletingVideoId?: string | null;
   layout?: 'grid' | 'list';
+  showSubscriptionButton?: boolean;
+  initialSubscribed?: boolean;
 }
 
 export default function VideoCard({ 
@@ -36,7 +39,9 @@ export default function VideoCard({
   onEdit, 
   onDelete, 
   deletingVideoId,
-  layout = 'grid'
+  layout = 'grid',
+  showSubscriptionButton = false,
+  initialSubscribed = false
 }: VideoCardProps) {
   const router = useRouter();
 
@@ -193,6 +198,14 @@ export default function VideoCard({
                 {formatViewCount(video.channel.subscriberCount)} subscribers
               </p>
             </div>
+            {showSubscriptionButton && user && video.channel.userId !== user.id && (
+              <SubscriptionButton
+                channelId={video.channel.id}
+                initialSubscribed={initialSubscribed}
+                initialSubscriberCount={video.channel.subscriberCount}
+                className="text-xs"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -314,6 +327,15 @@ export default function VideoCard({
               </div>
             </div>
           </div>
+          
+          {showSubscriptionButton && user && video.channel.userId !== user.id && (
+            <SubscriptionButton
+              channelId={video.channel.id}
+              initialSubscribed={initialSubscribed}
+              initialSubscriberCount={video.channel.subscriberCount}
+              className="text-xs"
+            />
+          )}
         </div>
       </div>
     </div>

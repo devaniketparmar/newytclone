@@ -95,8 +95,22 @@ export default function UniversalLayout({
                 <div className="flex items-center space-x-2">
                   {user ? (
                     <>
-                      <div className="w-7 h-7 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                        {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
+                      {user.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl.startsWith('/uploads/') ? `/api/uploads/${user.avatarUrl.replace('/uploads/', '')}` : user.avatarUrl}
+                          alt={user.firstName || user.username || 'User'}
+                          className="w-7 h-7 rounded-full object-cover"
+                          onError={(e) => {
+                            // Fallback to initials if image fails to load
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className={`w-7 h-7 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm ${user.avatarUrl ? 'hidden' : 'flex'}`}
+                      >
+                        {user?.firstName ? user.firstName.charAt(0).toUpperCase() : user?.username ? user.username.charAt(0).toUpperCase() : 'U'}
                       </div>
                       <button className="p-1.5 rounded-full hover:bg-neutral-100 transition-colors" title="Logout">
                         <svg className="w-4 h-4 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">

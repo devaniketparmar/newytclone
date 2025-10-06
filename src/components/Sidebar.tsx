@@ -555,8 +555,22 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} w-full p-3 rounded-xl hover:bg-white/50 transition-colors duration-200`}
                   >
-                    <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl.startsWith('/uploads/') ? `/api/uploads/${user.avatarUrl.replace('/uploads/', '')}` : user.avatarUrl}
+                        alt={user.firstName || user.username || 'User'}
+                        className="w-10 h-10 rounded-full object-cover"
+                        onError={(e) => {
+                          // Fallback to initials if image fails to load
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      className={`w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold ${user.avatarUrl ? 'hidden' : 'flex'}`}
+                    >
+                      {user?.firstName ? user.firstName.charAt(0).toUpperCase() : user?.username ? user.username.charAt(0).toUpperCase() : 'U'}
                     </div>
                     {!isCollapsed && (
                       <div className="flex-1 text-left">

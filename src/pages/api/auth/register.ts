@@ -124,7 +124,8 @@ async function handleRegister(req: NextApiRequest, res: NextApiResponse) {
       data: {
         userId: user.id,
         name: `${sanitizedFirstName} ${sanitizedLastName}`.trim() || sanitizedUsername,
-        description: `Welcome to ${sanitizedUsername}'s channel!`
+        description: `Welcome to ${sanitizedUsername}'s channel!`,
+        avatarUrl: '/uploads/thumbnails/test-avatar.svg' // Default avatar
       }
     });
 
