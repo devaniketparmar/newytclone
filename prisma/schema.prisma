@@ -49,6 +49,7 @@ model User {
   hashtagModeration HashtagModeration[]
   hashtagReports   HashtagReport[]
   hashtagBlacklist HashtagBlacklist[]
+  watchLater        WatchLater[]
 
   @@map("users")
 }
@@ -129,6 +130,7 @@ model Video {
   views           View[]
   videoTags       VideoTag[]
   playlistVideos  PlaylistVideo[]
+  watchLater      WatchLater[]
 
   @@map("videos")
 }
@@ -524,4 +526,18 @@ model CommentNotification {
   comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@map("comment_notifications")
+}
+
+model WatchLater {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  videoId   String   @map("video_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@map("watch_later")
 }

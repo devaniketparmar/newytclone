@@ -123,16 +123,6 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
       path: '/library',
       active: router.pathname === '/library'
     },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-        </svg>
-      ),
-      label: 'Following',
-      path: '/hashtag-following',
-      active: router.pathname === '/hashtag-following'
-    },
   ];
 
   const recentVideos = [
@@ -422,7 +412,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
       }}>
         {/* make inner content scroll independently on large screens */}
         <div className={`flex flex-col h-full max-h-screen transition-all duration-300 ease-out ${isCollapsed ? 'overflow-hidden opacity-0' : 'overflow-y-auto lg:overflow-y-auto opacity-100'}`} style={{ WebkitOverflowScrolling: 'touch' }}>
-          {!isCollapsed && (
+          {!isCollapsed && isHydrated && (
             <>
               {/* Header */}
               <div className="flex items-center bg-gradient-to-r from-white to-neutral-50 p-2 justify-between"> 
@@ -494,26 +484,26 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
                       {item.icon}
                     </span>
                     
-                    <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed && isHydrated ? 'hidden' : ''}`}>{item.label}</span>
+                    <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed ? 'hidden' : ''}`}>{item.label}</span>
                     
-                    {item.badge && !isCollapsed && isHydrated && (
+                    {item.badge && !isCollapsed && (
                       <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center shadow-sm relative z-10">
                         {item.badge > 99 ? '99+' : item.badge}
                       </span>
                     )}
                     
                     {/* Active indicator for expanded state */}
-                    {item.active && !isCollapsed && isHydrated && (
+                    {item.active && !isCollapsed && (
                       <div className="ml-auto w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-sm relative z-10"></div>
                     )}
                     
                     {/* Enhanced active indicator for collapsed state */}
-                    {item.active && isCollapsed && isHydrated && (
+                    {item.active && isCollapsed && (
                       <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-lg shadow-red-500/30"></div>
                     )}
                     
                     {/* Subtle pulse animation for active collapsed items */}
-                    {item.active && isCollapsed && isHydrated && (
+                    {item.active && isCollapsed && (
                       <div className="absolute inset-0 rounded-2xl bg-red-500/5 animate-pulse"></div>
                     )}
                   </button>
@@ -525,7 +515,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             <div className="mx-4 border-t border-neutral-200" />
 
             {/* Recent Videos Section */}
-            {!isCollapsed && (
+            {false && (
               <div className="p-4">
                 <div className="px-4 py-2 mb-3">
                   <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -814,6 +804,32 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             </div>
           </div>
             </>
+          )}
+          
+          {/* Fallback content for SSR */}
+          {!isHydrated && (
+            <div className="flex flex-col h-full">
+              <div className="flex items-center bg-gradient-to-r from-white to-neutral-50 p-2 justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                  </div>
+                  <span className="text-xl font-bold text-neutral-900">YouTube</span>
+                </div>
+              </div>
+              <div className="flex-1 p-4">
+                <div className="space-y-1">
+                  {mainNavigationItems.map((item, index) => (
+                    <div key={index} className="w-full flex items-center space-x-4 px-4 py-3 rounded-2xl text-left">
+                      <span className="w-5 h-5 text-neutral-500">{item.icon}</span>
+                      <span className="text-sm font-medium flex-1 truncate">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>

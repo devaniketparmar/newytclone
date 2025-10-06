@@ -129,6 +129,18 @@ async function handleRegister(req: NextApiRequest, res: NextApiResponse) {
       }
     });
 
+    // Create default "Watch Later" playlist
+    await prisma.playlist.create({
+      data: {
+        userId: user.id,
+        name: 'Watch Later',
+        description: 'Videos you want to watch later',
+        privacy: 'PRIVATE',
+        videoCount: 0,
+        viewCount: BigInt(0)
+      }
+    });
+
     // Generate JWT token
     const tokenPayload = {
       userId: user.id,

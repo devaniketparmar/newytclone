@@ -5,9 +5,29 @@ interface VideoPlayerProps {
   title: string;
   thumbnailUrl?: string;
   className?: string;
+  playlistId?: string;
+  playlistIndex?: number;
+  playlistVideos?: Array<{
+    id: string;
+    title: string;
+    videoUrl: string;
+    thumbnailUrl?: string;
+  }>;
+  onNextVideo?: () => void;
+  onPreviousVideo?: () => void;
 }
 
-export default function VideoPlayer({ videoUrl, title, thumbnailUrl, className = '' }: VideoPlayerProps) {
+export default function VideoPlayer({ 
+  videoUrl, 
+  title, 
+  thumbnailUrl, 
+  className = '',
+  playlistId,
+  playlistIndex,
+  playlistVideos,
+  onNextVideo,
+  onPreviousVideo
+}: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -393,6 +413,33 @@ export default function VideoPlayer({ videoUrl, title, thumbnailUrl, className =
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6L14.6 7.2A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" />
                   </svg>
                 </button>
+
+                {/* Playlist Navigation */}
+                {playlistVideos && playlistVideos.length > 1 && (
+                  <>
+                    {/* Previous Video */}
+                    <button
+                      onClick={onPreviousVideo}
+                      className="text-white hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-white/10"
+                      title="Previous video"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Next Video */}
+                    <button
+                      onClick={onNextVideo}
+                      className="text-white hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-white/10"
+                      title="Next video"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </>
+                )}
 
                 {/* Volume */}
                 <div className="flex items-center space-x-2 relative">

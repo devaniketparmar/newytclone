@@ -46,13 +46,24 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
   const [loading, setLoading] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  
+  // Playlist support
+  const [playlistVideos, setPlaylistVideos] = useState<any[]>([]);
+  const [playlistIndex, setPlaylistIndex] = useState(0);
+  const [shuffleMode, setShuffleMode] = useState(false);
 
   useEffect(() => {
     // Load user's like and subscription status
     if (user) {
       loadUserInteractionStatus();
     }
-  }, [user, video.id]);
+    
+    // Load playlist if in playlist mode
+    const { playlist, index, shuffle } = router.query;
+    if (playlist && typeof playlist === 'string') {
+      loadPlaylistVideos(playlist, parseInt(index as string) || 0, shuffle === 'true');
+    }
+  }, [user, video.id, router.query]);
 
   // Record watch history (fire-and-forget)
   useEffect(() => {
@@ -76,6 +87,51 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
       }
     })();
   }, [video.id]);
+
+  const loadPlaylistVideos = async (playlistId: string, index: number, shuffle: boolean) => {
+    try {
+      const response = await fetch(`/api/playlists/${playlistId}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPlaylistVideos(data.data.videos || []);
+        setPlaylistIndex(index);
+        setShuffleMode(shuffle);
+      }
+    } catch (error) {
+      console.error('Error loading playlist:', error);
+    }
+  };
+
+  const handleNextVideo = () => {
+    if (playlistVideos.length === 0) return;
+    
+    let nextIndex;
+    if (shuffleMode) {
+      nextIndex = Math.floor(Math.random() * playlistVideos.length);
+    } else {
+      nextIndex = (playlistIndex + 1) % playlistVideos.length;
+    }
+    
+    const nextVideo = playlistVideos[nextIndex];
+    router.push(`/video/${nextVideo.id}?playlist=${router.query.playlist}&index=${nextIndex}&shuffle=${shuffleMode}`);
+  };
+
+  const handlePreviousVideo = () => {
+    if (playlistVideos.length === 0) return;
+    
+    let prevIndex;
+    if (shuffleMode) {
+      prevIndex = Math.floor(Math.random() * playlistVideos.length);
+    } else {
+      prevIndex = playlistIndex === 0 ? playlistVideos.length - 1 : playlistIndex - 1;
+    }
+    
+    const prevVideo = playlistVideos[prevIndex];
+    router.push(`/video/${prevVideo.id}?playlist=${router.query.playlist}&index=${prevIndex}&shuffle=${shuffleMode}`);
+  };
 
   const loadUserInteractionStatus = async () => {
     try {
@@ -273,6 +329,11 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
                 thumbnailUrl={video.thumbnailUrl}
                 title={video.title}
                 className="w-full"
+                playlistId={router.query.playlist as string}
+                playlistIndex={playlistIndex}
+                playlistVideos={playlistVideos}
+                onNextVideo={handleNextVideo}
+                onPreviousVideo={handlePreviousVideo}
               />
             </div>
 
