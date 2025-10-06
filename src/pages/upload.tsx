@@ -1,12 +1,13 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
+import SmartHashtagInput from '@/components/SmartHashtagInput';
 
 interface UploadFormData {
   title: string;
   description: string;
   category: string;
   privacy: 'public' | 'unlisted' | 'private';
-  tags: string;
+  hashtags: string[];
   language: string;
   scheduledAt?: string;
   ageRestriction: boolean;
@@ -36,7 +37,7 @@ export default function UploadPage() {
     description: '',
     category: 'Entertainment',
     privacy: 'public',
-    tags: '',
+    hashtags: [],
     language: 'en',
     scheduledAt: '',
     ageRestriction: false,
@@ -215,7 +216,7 @@ export default function UploadPage() {
       uploadData.append('description', formData.description);
       uploadData.append('category', formData.category);
       uploadData.append('privacy', formData.privacy);
-      uploadData.append('tags', formData.tags);
+      uploadData.append('hashtags', JSON.stringify(formData.hashtags));
       uploadData.append('language', formData.language);
       uploadData.append('ageRestriction', formData.ageRestriction.toString());
       uploadData.append('commentsEnabled', formData.commentsEnabled.toString());
@@ -299,7 +300,7 @@ export default function UploadPage() {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-800">Loading...</p>
         </div>
       </div>
     );
@@ -401,7 +402,7 @@ export default function UploadPage() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-semibold text-gray-900">{selectedFile.name}</h3>
-                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-700">
+                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-800">
                     <span className="flex items-center space-x-1">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3m0 0h8" />
@@ -435,10 +436,10 @@ export default function UploadPage() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-semibold text-gray-900">Upload a video</h3>
-                  <p className="text-gray-700 font-medium">
+                  <p className="text-gray-800 font-medium">
                     Drag and drop your video here, or click to browse
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-700">
                     Supports MP4, WebM, OGG, AVI, MOV (max 500MB)
                   </p>
                 </div>
@@ -549,19 +550,22 @@ export default function UploadPage() {
 
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-3">
-                  Tags
+                  Hashtags
                 </label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-gray-900 font-medium"
-                  placeholder="Enter tags separated by commas"
+                <SmartHashtagInput
+                  value={formData.hashtags}
+                  onChange={(hashtags) => setFormData(prev => ({ ...prev, hashtags }))}
+                  placeholder="Add hashtags to help people discover your video..."
+                  maxHashtags={10}
+                  showRecommendations={true}
+                  videoContent={{
+                    title: formData.title,
+                    description: formData.description,
+                    category: formData.category,
+                    duration: 0, // We don't have duration yet during upload
+                  }}
+                  className="w-full"
                 />
-                <p className="text-sm text-gray-700 mt-2 font-medium">
-                  Add tags to help people discover your video (max 15 tags)
-                </p>
               </div>
             </div>
 

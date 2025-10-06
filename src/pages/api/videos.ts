@@ -45,8 +45,42 @@ async function handleGetVideos(req: NextApiRequest, res: NextApiResponse) {
       privacy: VideoPrivacy.PUBLIC
     };
 
-    if (category) {
-      where.categoryId = parseInt(category as string);
+    if (category && category !== 'all') {
+      // Check if category is a number (ID) or string (name)
+      const categoryParam = category as string;
+      if (/^\d+$/.test(categoryParam)) {
+        // It's a numeric ID
+        where.categoryId = parseInt(categoryParam);
+      } else {
+        // It's a category name, find the category by name
+        const categoryRecord = await prisma.category.findFirst({
+          where: {
+            name: {
+              equals: categoryParam,
+              mode: 'insensitive'
+            },
+            active: true
+          }
+        });
+        
+        if (categoryRecord) {
+          where.categoryId = categoryRecord.id;
+        } else {
+          // If category not found, return empty results
+          return res.status(200).json({
+            success: true,
+            data: [],
+            pagination: {
+              page: pageNum,
+              limit: limitNum,
+              total: 0,
+              totalPages: 0,
+              hasNext: false,
+              hasPrev: false
+            }
+          });
+        }
+      }
     }
 
     if (search) {
@@ -98,7 +132,7 @@ async function handleGetVideos(req: NextApiRequest, res: NextApiResponse) {
         id: video.channel.id,
         name: video.channel.name,
         avatarUrl: video.channel.avatarUrl,
-        subscriberCount: video.channel.subscriberCount,
+        subscriberCount: Number(video.channel.subscriberCount),
         userId: video.channel.userId
       }
     }));

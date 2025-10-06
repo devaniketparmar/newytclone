@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getInitializedPrisma } from '../../../lib/prisma';
+import { getInitializedPrisma } from '@/lib/prisma';
 import {
   PasswordUtils,
   JWTUtils,
@@ -10,7 +10,7 @@ import {
   ValidationUtils,
   ErrorUtils,
   loginSchema
-} from '../../../utils/auth';
+} from '@/utils/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {

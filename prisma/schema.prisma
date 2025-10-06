@@ -36,11 +36,19 @@ model User {
   // Relations
   channels          Channel[]
   subscriptions     Subscription[]
-  comments          Comment[]
+  comments          Comment[] @relation("UserComments")
   likes             Like[]
   views             View[]
   playlists         Playlist[]
   notifications     Notification[]
+  commentReports    CommentReport[] @relation("CommentReporter")
+  commentReviews    CommentReport[] @relation("CommentReviewer")
+  commentNotifications CommentNotification[]
+  pinnedComments    Comment[] @relation("PinnedComments")
+  hashtagFollows    HashtagFollow[]
+  hashtagModeration HashtagModeration[]
+  hashtagReports   HashtagReport[]
+  hashtagBlacklist HashtagBlacklist[]
 
   @@map("users")
 }
@@ -151,13 +159,19 @@ model Comment {
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
   status      CommentStatus @default(ACTIVE)
+  pinned      Boolean       @default(false)
+  pinnedAt    DateTime?     @map("pinned_at")
+  pinnedBy    String?       @map("pinned_by")
 
   // Relations
   video       Video         @relation(fields: [videoId], references: [id], onDelete: Cascade)
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User          @relation("UserComments", fields: [userId], references: [id], onDelete: Cascade)
   parent      Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies     Comment[]     @relation("CommentReplies")
   likes       Like[]
+  reports     CommentReport[]
+  notifications CommentNotification[]
+  pinnedByUser User?        @relation("PinnedComments", fields: [pinnedBy], references: [id])
 
   @@map("comments")
 }
@@ -203,10 +217,17 @@ model Tag {
   id          String   @id @default(uuid())
   name        String   @unique
   usageCount  Int      @default(0) @map("usage_count")
+  trendingScore Decimal @default(0) @map("trending_score")
+  followerCount Int    @default(0) @map("follower_count")
   createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   videoTags   VideoTag[]
+  followers   HashtagFollow[]
+  analytics   HashtagAnalytics[]
+  moderation  HashtagModeration[]
+  reports     HashtagReport[]
 
   @@map("tags")
 }
@@ -223,6 +244,86 @@ model VideoTag {
 
   @@unique([videoId, tagId])
   @@map("video_tags")
+}
+
+model HashtagFollow {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  hashtagId String   @map("hashtag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hashtag   Tag      @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hashtagId])
+  @@map("hashtag_follows")
+}
+
+model HashtagAnalytics {
+  id          String   @id @default(uuid())
+  hashtagId   String   @map("hashtag_id")
+  date        DateTime @db.Date
+  views       Int      @default(0)
+  engagement  Int      @default(0)
+  newFollowers Int     @default(0) @map("new_followers")
+  videosAdded Int      @default(0) @map("videos_added")
+  trendingScore Decimal @default(0) @map("trending_score")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  hashtag     Tag      @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@unique([hashtagId, date])
+  @@map("hashtag_analytics")
+}
+
+model HashtagModeration {
+  id          String   @id @default(uuid())
+  hashtagId   String   @map("hashtag_id")
+  moderatorId String?  @map("moderator_id")
+  action      ModerationAction
+  reason      String?
+  status      ModerationStatus @default(PENDING)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  hashtag     Tag      @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  moderator   User?    @relation(fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  @@map("hashtag_moderation")
+}
+
+model HashtagReport {
+  id          String   @id @default(uuid())
+  hashtagId   String   @map("hashtag_id")
+  reporterId  String   @map("reporter_id")
+  reason      ReportReason
+  description String?
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  hashtag     Tag      @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  reporter    User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([hashtagId, reporterId])
+  @@map("hashtag_reports")
+}
+
+model HashtagBlacklist {
+  id          String   @id @default(uuid())
+  hashtagName String   @unique @map("hashtag_name")
+  reason      String
+  addedBy     String   @map("added_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  addedByUser User     @relation(fields: [addedBy], references: [id], onDelete: Cascade)
+
+  @@map("hashtag_blacklist")
 }
 
 model Playlist {
@@ -353,4 +454,74 @@ enum NotificationType {
   NEW_SUBSCRIPTION
   TRENDING
   SYSTEM
+  HASHTAG_NEW_VIDEO
+  HASHTAG_TRENDING
+  HASHTAG_MILESTONE
+}
+
+enum ModerationAction {
+  APPROVE
+  REJECT
+  WARN
+  SUSPEND
+  DELETE
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ESCALATED
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  INAPPROPRIATE_CONTENT
+  COPYRIGHT_VIOLATION
+  MISINFORMATION
+  VIOLENCE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+model CommentReport {
+  id          String   @id @default(uuid())
+  commentId   String   @map("comment_id")
+  reporterId  String   @map("reporter_id")
+  reason      String   // 'spam', 'harassment', 'inappropriate', 'other'
+  description String?
+  status      String   @default("pending") // 'pending', 'reviewed', 'resolved'
+  createdAt   DateTime @default(now()) @map("created_at")
+  reviewedAt  DateTime? @map("reviewed_at")
+  reviewedBy  String?   @map("reviewed_by")
+
+  // Relations
+  comment     Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporter    User     @relation("CommentReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewer    User?    @relation("CommentReviewer", fields: [reviewedBy], references: [id])
+
+  @@map("comment_reports")
+}
+
+model CommentNotification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  commentId String   @map("comment_id")
+  type      String   // 'reply', 'mention', 'like', 'pinned'
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("comment_notifications")
 }

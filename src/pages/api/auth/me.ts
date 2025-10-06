@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getInitializedPrisma } from '../../../lib/prisma';
-import { JWTUtils } from '../../../utils/auth';
+import { getInitializedPrisma } from '@/lib/prisma';
+import { JWTUtils } from '@/utils/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {

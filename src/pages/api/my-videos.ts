@@ -137,7 +137,7 @@ async function handleGetUserVideos(req: NextApiRequest, res: NextApiResponse) {
         id: video.channel.id,
         name: video.channel.name,
         avatarUrl: video.channel.avatarUrl,
-        subscriberCount: video.channel.subscriberCount,
+        subscriberCount: Number(video.channel.subscriberCount),
         userId: video.channel.userId
       }
     }));
