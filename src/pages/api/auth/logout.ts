@@ -40,9 +40,13 @@ async function handleLogout(req: NextApiRequest, res: NextApiResponse) {
     // For now, we'll just clear the cookies
     
     // Clear HTTP-only cookies
+    const isProduction = process.env.NODE_ENV === 'production';
+    const secureFlag = isProduction ? 'Secure' : '';
+    const sameSiteFlag = isProduction ? 'SameSite=Strict' : 'SameSite=Lax';
+    
     res.setHeader('Set-Cookie', [
-      'token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/',
-      'refreshToken=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/'
+      `token=; HttpOnly; ${secureFlag}; ${sameSiteFlag}; Max-Age=0; Path=/`,
+      `refreshToken=; HttpOnly; ${secureFlag}; ${sameSiteFlag}; Max-Age=0; Path=/`
     ]);
 
     res.status(200).json({

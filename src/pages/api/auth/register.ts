@@ -157,9 +157,13 @@ async function handleRegister(req: NextApiRequest, res: NextApiResponse) {
     // await sendVerificationEmail(user.email, verificationToken);
 
     // Set HTTP-only cookie
+    const isProduction = process.env.NODE_ENV === 'production';
+    const secureFlag = isProduction ? 'Secure' : '';
+    const sameSiteFlag = isProduction ? 'SameSite=Strict' : 'SameSite=Lax';
+    
     res.setHeader('Set-Cookie', [
-      `token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`,
-      `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${30 * 24 * 60 * 60}; Path=/`
+      `token=${token}; HttpOnly; ${secureFlag}; ${sameSiteFlag}; Max-Age=${7 * 24 * 60 * 60}; Path=/`,
+      `refreshToken=${refreshToken}; HttpOnly; ${secureFlag}; ${sameSiteFlag}; Max-Age=${30 * 24 * 60 * 60}; Path=/`
     ]);
 
     // Reset rate limit on successful registration

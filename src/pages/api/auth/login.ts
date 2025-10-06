@@ -138,10 +138,11 @@ async function handleLogin(req: NextApiRequest, res: NextApiResponse) {
     const refreshToken = JWTUtils.generateRefreshToken(tokenPayload);
 
     // Set HTTP-only cookies
+    const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = [
       'HttpOnly',
-      'Secure',
-      'SameSite=Strict'
+      ...(isProduction ? ['Secure'] : []),
+      isProduction ? 'SameSite=Strict' : 'SameSite=Lax'
     ];
 
     if (rememberMe) {
@@ -263,9 +264,13 @@ export async function handle2FAVerification(req: NextApiRequest, res: NextApiRes
     const refreshToken = JWTUtils.generateRefreshToken(tokenPayload);
 
     // Set cookies
+    const isProduction = process.env.NODE_ENV === 'production';
+    const secureFlag = isProduction ? 'Secure' : '';
+    const sameSiteFlag = isProduction ? 'SameSite=Strict' : 'SameSite=Lax';
+    
     res.setHeader('Set-Cookie', [
-      `token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=${24 * 60 * 60}; Path=/`,
-      `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${30 * 24 * 60 * 60}; Path=/`
+      `token=${token}; HttpOnly; ${secureFlag}; ${sameSiteFlag}; Max-Age=${24 * 60 * 60}; Path=/`,
+      `refreshToken=${refreshToken}; HttpOnly; ${secureFlag}; ${sameSiteFlag}; Max-Age=${30 * 24 * 60 * 60}; Path=/`
     ]);
 
     res.status(200).json({

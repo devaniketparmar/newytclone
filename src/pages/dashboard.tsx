@@ -55,9 +55,11 @@ export default function Dashboard() {
         method: 'POST',
         credentials: 'include'
       });
-      router.push('/videos');
+      router.push('/auth');
     } catch (error) {
       console.error('Logout failed:', error);
+      // Still redirect to auth page even if logout fails
+      router.push('/auth');
     }
   };
 

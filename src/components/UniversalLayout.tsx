@@ -21,6 +21,29 @@ export default function UniversalLayout({
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        // Clear any client-side state if needed
+        // Redirect to auth page
+        router.push('/auth');
+      } else {
+        console.error('Logout failed');
+        // Still redirect to auth page even if logout fails
+        router.push('/auth');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still redirect to auth page even if logout fails
+      router.push('/auth');
+    }
+  };
+
   // Load sidebar open state from sessionStorage on component mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -112,7 +135,11 @@ export default function UniversalLayout({
                       >
                         {user?.firstName ? user.firstName.charAt(0).toUpperCase() : user?.username ? user.username.charAt(0).toUpperCase() : 'U'}
                       </div>
-                      <button className="p-1.5 rounded-full hover:bg-neutral-100 transition-colors" title="Logout">
+                      <button 
+                        onClick={handleLogout}
+                        className="p-1.5 rounded-full hover:bg-neutral-100 transition-colors" 
+                        title="Logout"
+                      >
                         <svg className="w-4 h-4 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
