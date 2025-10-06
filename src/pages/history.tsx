@@ -106,25 +106,73 @@ export default function HistoryPage({ history: initialHistory = [], user }: Hist
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   try {
-    const protocol = context.req.headers['x-forwarded-proto'] || 'http';
-    const host = context.req.headers.host;
-    const baseUrl = process.env.NODE_ENV === 'production' ? 'https://your-domain.com' : `${protocol}://${host}`;
+    // Try to get user data from cookies
+    let user = null;
+    const token = context.req.cookies.token;
+    
+    if (token) {
+      try {
+        const protocol = context.req.headers['x-forwarded-proto'] || 'http';
+        const host = context.req.headers.host;
+        const baseUrl = process.env.NODE_ENV === 'production' 
+          ? 'https://your-domain.com' 
+          : `${protocol}://${host}`;
 
-    // Try to fetch history from API if available
-    const res = await fetch(`${baseUrl}/api/history`, { headers: { cookie: context.req.headers.cookie || '' } });
-    if (res.ok) {
-      const data = await res.json();
-      return { props: { history: data.data || [] } };
+        const userResponse = await fetch(`${baseUrl}/api/auth/me`, {
+          headers: {
+            'Cookie': `token=${token}`
+          }
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          user = userData.data.user;
+        }
+      } catch (error) {
+        console.log('Could not fetch user data:', error);
+      }
     }
-  } catch (e) {
-    // ignore
+
+    // If no user is authenticated, redirect to auth page
+    if (!user) {
+      return {
+        redirect: {
+          destination: '/auth',
+          permanent: false,
+        },
+      };
+    }
+
+    // Try to fetch history from API if user is authenticated
+    try {
+      const protocol = context.req.headers['x-forwarded-proto'] || 'http';
+      const host = context.req.headers.host;
+      const baseUrl = process.env.NODE_ENV === 'production' ? 'https://your-domain.com' : `${protocol}://${host}`;
+
+      const res = await fetch(`${baseUrl}/api/history`, { 
+        headers: { 
+          cookie: context.req.headers.cookie || '',
+          'Authorization': `Bearer ${token}`
+        } 
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        return { props: { history: data.data || [], user } };
+      }
+    } catch (e) {
+      console.log('Could not fetch history:', e);
+    }
+
+    // Return empty history if API fails but user is authenticated
+    return { props: { history: [], user } };
+  } catch (error) {
+    console.error('Error in getServerSideProps:', error);
+    return {
+      redirect: {
+        destination: '/auth',
+        permanent: false,
+      },
+    };
   }
-
-  // fallback placeholder data
-  const sample = [
-    { id: 'demo-1', title: 'Getting started with Next.js', thumbnailUrl: '/api/placeholder/320/180', channel: { name: 'Next Tutorials' } },
-    { id: 'demo-2', title: 'Understanding React Hooks', thumbnailUrl: '/api/placeholder/320/180', channel: { name: 'React Academy' } },
-  ];
-
-  return { props: { history: sample } };
 };

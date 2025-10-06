@@ -106,6 +106,16 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
     {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      label: 'History',
+      path: '/history',
+      active: router.pathname === '/history'
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       ),
@@ -515,8 +525,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             <div className="mx-4 border-t border-neutral-200" />
 
             {/* Recent Videos Section */}
-            {/* {!isCollapsed && ( */}
-            { false && (
+            {!isCollapsed && (
               <div className="p-4">
                 <div className="px-4 py-2 mb-3">
                   <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
