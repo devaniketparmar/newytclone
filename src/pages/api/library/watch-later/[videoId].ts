@@ -37,6 +37,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const userId = decoded.userId;
 
+    if (req.method === 'GET') {
+      // Check if video is in watch later
+      const watchLaterEntry = await prisma.watchLater.findUnique({
+        where: {
+          userId_videoId: {
+            userId: userId,
+            videoId: videoId
+          }
+        }
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          isInWatchLater: !!watchLaterEntry
+        }
+      });
+    }
+
     if (req.method === 'POST') {
       // Add to watch later
       try {
@@ -78,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    res.setHeader('Allow', ['POST', 'DELETE']);
+    res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
     return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   } catch (error) {
