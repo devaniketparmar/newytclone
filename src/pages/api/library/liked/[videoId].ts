@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const userId = decoded.userId;
+    const userId = (decoded as any).userId;
 
     if (req.method === 'POST') {
       // Add to liked videos

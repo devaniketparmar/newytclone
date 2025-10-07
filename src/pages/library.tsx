@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import UniversalLayout from '@/components/UniversalLayout';
 import VideoCard from '@/components/VideoCard';
 
+import { api } from '../lib/axios';
 interface LibraryVideo {
   id: string;
   title: string;
@@ -64,12 +65,12 @@ export default function LibraryPage({ user, libraryData: initialLibraryData }: L
 
   const handleRemoveFromWatchLater = async (videoId: string) => {
     try {
-      const response = await fetch(`/api/library/watch-later/${videoId}`, {
+      const response = await api.get(`/api/library/watch-later/${videoId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       
-      if (response.ok) {
+      if (response.status === 200) {
         setLibraryData(prev => ({
           ...prev,
           watchLater: prev.watchLater.filter(video => video.id !== videoId)
@@ -82,12 +83,12 @@ export default function LibraryPage({ user, libraryData: initialLibraryData }: L
 
   const handleRemoveFromLiked = async (videoId: string) => {
     try {
-      const response = await fetch(`/api/library/liked/${videoId}`, {
+      const response = await api.get(`/api/library/liked/${videoId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       
-      if (response.ok) {
+      if (response.status === 200) {
         setLibraryData(prev => ({
           ...prev,
           likedVideos: prev.likedVideos.filter(video => video.id !== videoId)

@@ -25,8 +25,8 @@ async function handleGetVideos(req: NextApiRequest, res: NextApiResponse) {
     if (token) {
       try {
         const decoded = JWTUtils.verifyToken(token);
-        if (decoded && decoded.userId) {
-          userId = decoded.userId;
+        if (decoded && (decoded as any).userId) {
+          userId = (decoded as any).userId;
         }
       } catch (error) {
         console.log('Token verification failed, proceeding without authentication');

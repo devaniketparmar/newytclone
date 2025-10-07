@@ -3,6 +3,7 @@ import UniversalLayout from '@/components/UniversalLayout';
 import VideoCard from '@/components/VideoCard';
 import { GetServerSideProps } from 'next';
 
+import { api } from '../lib/axios';
 interface MinimalVideo {
   id: string;
   title: string;
@@ -26,7 +27,7 @@ export default function HistoryPage({ history: initialHistory = [], user }: Hist
     // optimistic update
     setHistory(prev => prev.filter(v => v.id !== id));
     try {
-      await fetch(`/api/history/${id}`, { method: 'DELETE' });
+      await api.delete(`/api/history/${id}`);
     } catch (e) {
       // ignore for now, could re-fetch
     }
@@ -36,7 +37,7 @@ export default function HistoryPage({ history: initialHistory = [], user }: Hist
     setLoading(true);
     setHistory([]);
     try {
-      await fetch('/api/history', { method: 'DELETE' });
+      await api.delete('/api/history');
     } catch (e) {
       // ignore
     } finally {
@@ -77,9 +78,12 @@ export default function HistoryPage({ history: initialHistory = [], user }: Hist
                     ...video,
                     description: '',
                     videoUrl: '',
+                    duration: video.duration || 0,
+                    viewCount: video.viewCount || 0,
                     likeCount: 0,
                     commentCount: 0,
                     createdAt: '',
+                    publishedAt: video.publishedAt || video.createdAt || '',
                     status: 'READY' as const,
                     channel: {
                       id: video.channel?.id || '',

@@ -53,8 +53,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const formattedVideos = videos.map(video => ({
       id: video.id,
       title: video.title,
-      description: video.description,
-      thumbnailUrl: video.thumbnailUrl,
+      description: video.description || '',
+      thumbnailUrl: video.thumbnailUrl || '',
       videoUrl: video.videoUrl,
       duration: video.duration,
       viewCount: video._count.views,
@@ -62,12 +62,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       dislikeCount: 0, // We don't track dislikes separately
       commentCount: video._count.comments,
       createdAt: video.createdAt.toISOString(),
-      publishedAt: video.publishedAt.toISOString(),
+      publishedAt: video.publishedAt?.toISOString() || video.createdAt.toISOString(),
       status: video.status as 'PROCESSING' | 'READY' | 'FAILED',
       channel: {
         id: video.channel.id,
         name: video.channel.name,
-        avatarUrl: video.channel.avatarUrl,
+        avatarUrl: video.channel.avatarUrl || '',
         subscriberCount: Number(video.channel.subscriberCount),
         userId: video.channel.userId
       }

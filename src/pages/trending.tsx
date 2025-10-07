@@ -6,6 +6,7 @@ import SearchHeader from '@/components/SearchHeader';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 import VideoMenu from '@/components/VideoMenu';
 
+import { api } from '../lib/axios';
 interface Video {
   id: string;
   title: string;
@@ -109,10 +110,10 @@ export default function TrendingPage({ videos: initialVideos, user, filters: ini
         }
       });
 
-      const response = await fetch(`/api/videos/trending?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setVideos(data.data.videos || []);
+      const response = await api.get(`/api/videos/trending?${params.toString()}`);
+      if (response.status === 200) {
+        const data = response.data;
+        setVideos(data.data?.videos || []);
       }
     } catch (error) {
       console.error('Error fetching trending videos:', error);
@@ -394,7 +395,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     let videos = [];
     let insights = null;
 
-    if (response.ok) {
+    if (response.status === 200) {
       const data = await response.json();
       videos = data.data.videos || [];
       insights = data.data.insights || null;
@@ -414,7 +415,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         
         if (userResponse.ok) {
           const userData = await userResponse.json();
-          user = userData.data.user;
+          user = userData.data?.user || null;
         }
       } catch (error) {
         console.log('Could not fetch user data:', error);

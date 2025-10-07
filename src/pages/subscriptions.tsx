@@ -6,6 +6,7 @@ import UniversalLayout from '@/components/UniversalLayout';
 import VideoCard from '@/components/VideoCard';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 
+import { api } from '../lib/axios';
 interface Channel {
   id: string;
   name: string;
@@ -71,14 +72,10 @@ export default function SubscriptionsPage({ user }: SubscriptionsPageProps) {
       }
       setError(null);
 
-      const response = await fetch(`/api/subscriptions?page=${page}&limit=10`, {
-        credentials: 'include', // Include cookies for authentication
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.get(`/api/subscriptions?page=${page}&limit=10`);
+      console.log('Subscriptions API Response:', response); // Debug log
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         if (response.status === 401) {
           router.push('/auth');
           return;
@@ -86,22 +83,34 @@ export default function SubscriptionsPage({ user }: SubscriptionsPageProps) {
         throw new Error('Failed to fetch subscriptions');
       }
 
-      const data = await response.json();
-      const newVideos = data.data.videos || [];
+      const data = response.data;
       
-      if (reset) {
-        setSubscriptionData(data.data);
+      // Check if response has expected structure
+      if (data && data.success && data.data) {
+        const newVideos = data.data.videos || [];
+        
+        if (reset) {
+          setSubscriptionData(data.data);
+        } else {
+          setSubscriptionData(prev => ({
+            ...prev!,
+            videos: [...prev!.videos, ...newVideos]
+          }));
+        }
+        
+        // Check if there are more videos
+        setHasMoreVideos(newVideos.length === 10);
       } else {
-        setSubscriptionData(prev => ({
-          ...prev!,
-          videos: [...prev!.videos, ...newVideos]
-        }));
+        console.warn('API response does not have expected structure:', data);
+        throw new Error('Invalid response structure');
       }
-      
-      // Check if there are more videos
-      setHasMoreVideos(newVideos.length === 10);
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       if (reset) {
@@ -120,15 +129,9 @@ export default function SubscriptionsPage({ user }: SubscriptionsPageProps) {
 
   const handleUnsubscribe = async (channelId: string) => {
     try {
-      const response = await fetch(`/api/channels/${channelId}/subscribe`, {
-        method: 'DELETE',
-        credentials: 'include', // Include cookies for authentication
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.delete(`/api/channels/${channelId}/subscribe`);
 
-      if (response.ok) {
+      if (response.status === 200) {
         // Refresh subscription data
         fetchSubscriptions();
       } else {

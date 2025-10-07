@@ -6,6 +6,7 @@ import SearchHeader from '@/components/SearchHeader';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 import VideoMenu from '@/components/VideoMenu';
 
+import { api } from '../lib/axios';
 interface Video {
   id: string;
   title: string;
@@ -101,9 +102,9 @@ export default function SearchPage({ videos, user, query, filters }: SearchPageP
         }
       });
       
-      const response = await fetch(`/api/search?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get(`/api/search?${params.toString()}`);
+      if (response.status === 200) {
+        const data = response.data;
         setSearchResults(data.data.videos || []);
       }
     } catch (error) {
@@ -131,9 +132,9 @@ export default function SearchPage({ videos, user, query, filters }: SearchPageP
         }
       });
       
-      const response = await fetch(`/api/search?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get(`/api/search?${params.toString()}`);
+      if (response.status === 200) {
+        const data = response.data;
         setSearchResults(data.data.videos || []);
       }
     } catch (error) {

@@ -1,3 +1,5 @@
+import { api } from '../lib/axios';
+
 // Authentication utility functions for client-side use
 export class AuthUtils {
   /**
@@ -6,13 +8,8 @@ export class AuthUtils {
    */
   static async isAuthenticated(): Promise<boolean> {
     try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      return response.ok;
+      const response = await api.get('/api/auth/me');
+      return response.status === 200;
     } catch (error) {
       console.error('Auth check failed:', error);
       return false;
@@ -25,18 +22,8 @@ export class AuthUtils {
    */
   static async getCurrentUser(): Promise<any | null> {
     try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.data.user;
-      }
-      return null;
+      const response = await api.get('/api/auth/me');
+      return response.data.data.user;
     } catch (error) {
       console.error('Get user failed:', error);
       return null;
@@ -55,19 +42,11 @@ export class AuthUtils {
   /**
    * Make authenticated API request
    * @param url - API endpoint URL
-   * @param options - fetch options
-   * @returns Promise<Response>
+   * @param options - axios options
+   * @returns Promise<AxiosResponse>
    */
-  static async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
-    const defaultOptions: RequestInit = {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    };
-
-    return fetch(url, { ...defaultOptions, ...options });
+  static async authenticatedRequest(url: string, options: any = {}) {
+    return api.get(url, options);
   }
 }
 

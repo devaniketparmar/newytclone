@@ -92,7 +92,7 @@ async function handleReportComment(req: NextApiRequest, res: NextApiResponse, vi
     const report = await prisma.commentReport.create({
       data: {
         commentId: commentId,
-        reporterId: payload.userId,
+        reporterId: (payload as any).userId,
         reason: reason,
         description: description || null,
         status: 'pending'

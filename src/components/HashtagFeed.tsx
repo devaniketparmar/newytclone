@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import VideoCard from './VideoCard';
 import LoadingPlaceholder from './LoadingPlaceholder';
 
+import { api } from '../lib/axios';
 interface FollowedHashtag {
   id: string;
   name: string;
@@ -60,10 +61,10 @@ const HashtagFeed: React.FC<HashtagFeedProps> = ({
   const fetchFollowedHashtags = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/hashtags/following?limit=${maxHashtags}`);
+      const response = await api.get(`/api/hashtags/following?limit=${maxHashtags}`);
       
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           setFollowedHashtags(data.data.followedHashtags);
           setRecentVideos(data.data.recentVideos);
@@ -73,7 +74,7 @@ const HashtagFeed: React.FC<HashtagFeedProps> = ({
       } else {
         setError('Failed to fetch followed hashtags');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching followed hashtags:', error);
       setError('An error occurred while fetching data');
     } finally {

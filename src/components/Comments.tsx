@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import LoadingPlaceholder from './LoadingPlaceholder';
+import { api } from '../lib/axios';
 
 interface Comment {
   id: string;
@@ -11,8 +12,9 @@ interface Comment {
   createdAt: string;
   updatedAt: string;
   pinned: boolean;
-  pinnedAt?: string;
+  pinnedAt?: string | null;
   pinnedBy?: string;
+  parentId?: string;
   user: {
     id: string;
     username: string;
@@ -75,18 +77,15 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
       setLoading(true);
       setError(null);
 
-      const response = await fetch(
-        `/api/videos/${videoId}/comments?page=${pageNum}&limit=10&sort=${sortBy}`,
-        {
-          credentials: 'include'
-        }
+      const response = await api.get(
+        `/api/videos/${videoId}/comments?page=${pageNum}&limit=10&sort=${sortBy}`
       );
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to fetch comments');
       }
 
-      const data = await response.json();
+      const data = response.data as any;
       
       if (data.success) {
         if (reset) {
@@ -127,22 +126,15 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
       setSubmitting(true);
       setError(null);
 
-      const response = await fetch(`/api/videos/${videoId}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          content: newComment.trim()
-        })
+      const response = await api.post(`/api/videos/${videoId}/comments`, {
+        content: newComment.trim()
       });
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to submit comment');
       }
 
-      const data = await response.json();
+      const data = response.data as any;
       
       if (data.success) {
         setComments(prev => [data.data, ...prev]);
@@ -168,22 +160,15 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
       setSubmitting(true);
       setError(null);
 
-      const response = await fetch(`/api/videos/${videoId}/comments/${commentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          content: editContent.trim()
-        })
+      const response = await api.put(`/api/videos/${videoId}/comments/${commentId}`, {
+        content: editContent.trim()
       });
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to update comment');
       }
 
-      const data = await response.json();
+      const data = response.data as any;
       
       if (data.success) {
         // Check if this is a reply (child comment) or main comment
@@ -225,16 +210,13 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
       setSubmitting(true);
       setError(null);
 
-      const response = await fetch(`/api/videos/${videoId}/comments/${commentId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await api.delete(`/api/videos/${videoId}/comments/${commentId}`);
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to delete comment');
       }
 
-      const data = await response.json();
+      const data = response.data as any;
       
       if (data.success) {
         // Check if this is a reply (child comment) or main comment
@@ -273,20 +255,13 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
     }
 
     try {
-      const response = await fetch(`/api/videos/${videoId}/comments/${commentId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ type })
-      });
+      const response = await api.post(`/api/videos/${videoId}/comments/${commentId}`, { type });
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to like comment');
       }
 
-      const data = await response.json();
+      const data = response.data as any;
       
       if (data.success) {
         // Check if this is a reply (child comment) or main comment
@@ -430,23 +405,16 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
 
     setReporting(true);
     try {
-      const response = await fetch(`/api/videos/${videoId}/comments/${commentId}/report`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          reason: reportReason,
-          description: reportDescription.trim() || null
-        })
+      const response = await api.post(`/api/videos/${videoId}/comments/${commentId}/report`, {
+        reason: reportReason,
+        description: reportDescription.trim() || null
       });
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to report comment');
       }
 
-      const data = await response.json();
+      const data = response.data as any;
       
       if (data.success) {
         setShowReportModal(null);
@@ -474,17 +442,14 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
     }
 
     try {
-      const method = pinned ? 'DELETE' : 'POST';
-      const response = await fetch(`/api/videos/${videoId}/comments/${commentId}/pin`, {
-        method,
-        credentials: 'include'
-      });
+      const method = pinned ? 'delete' : 'post';
+      const response = await api[method](`/api/videos/${videoId}/comments/${commentId}/pin`);
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error(`Failed to ${pinned ? 'unpin' : 'pin'} comment`);
       }
 
-      const data = await response.json();
+      const data = response.data as any;
       
       if (data.success) {
         // Update the comment in the state
@@ -530,23 +495,16 @@ export default function Comments({ videoId, user, commentCount, videoOwnerId }: 
 
     setSubmitting(true);
     try {
-      const response = await fetch(`/api/videos/${videoId}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          content: replyContent.trim(),
-          parentId: parentCommentId
-        })
+      const response = await api.post(`/api/videos/${videoId}/comments`, {
+        content: replyContent.trim(),
+        parentId: parentCommentId
       });
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to submit reply');
       }
 
-      const data = await response.json();
+      const data = response.data as any;
       
       if (data.success) {
         // Add the reply to the parent comment's replies array

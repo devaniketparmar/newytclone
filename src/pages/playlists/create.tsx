@@ -3,6 +3,7 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import UniversalLayout from '@/components/UniversalLayout';
 
+import { api } from '../../lib/axios';
 interface CreatePlaylistPageProps {
   user?: any;
 }
@@ -37,18 +38,11 @@ export default function CreatePlaylistPage({ user }: CreatePlaylistPageProps) {
     setError(null);
 
     try {
-      const response = await fetch('/api/playlists', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      });
+      const response = await api.post('/api/playlists', formData);
 
-      const data = await response.json();
+      const data = response.data as any;
 
-      if (response.ok) {
+      if (response.status === 200) {
         // Redirect to the created playlist
         router.push(`/playlist/${data.data.id}`);
       } else {
@@ -330,7 +324,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           const userData = await userResponse.json();
           user = userData.data.user;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log('Could not fetch user data:', error);
       }
     }
@@ -346,7 +340,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
 
     return { props: { user } };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in getServerSideProps:', error);
     return {
       redirect: {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+import { api } from '../lib/axios';
 interface HashtagInputProps {
   value: string[];
   onChange: (hashtags: string[]) => void;
@@ -31,15 +32,15 @@ export default function HashtagInput({
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/hashtags?action=suggestions&query=${encodeURIComponent(query)}&limit=8`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get(`/api/hashtags?action=suggestions&query=${encodeURIComponent(query)}&limit=8`); 
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           const hashtagNames = data.data.suggestions.map((tag: any) => tag.name);
           setSuggestions(hashtagNames);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching hashtag suggestions:', error);
     } finally {
       setIsLoading(false);

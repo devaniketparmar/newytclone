@@ -20,14 +20,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Verify token
     const decoded = JWTUtils.verifyToken(token);
-    if (!decoded || !decoded.userId) {
+    if (!decoded || !(decoded as any).userId) {
       return res.status(401).json({
         success: false,
         error: 'Invalid or expired token'
       });
     }
 
-    const userId = decoded.userId;
+    const userId = (decoded as any).userId;
 
     if (req.method === 'POST') {
       // Create new playlist

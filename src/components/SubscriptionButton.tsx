@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 
+import { api } from '../lib/axios';
 interface SubscriptionButtonProps {
   channelId: string;
   initialSubscribed?: boolean;
@@ -31,7 +32,7 @@ export default function SubscriptionButton({
       setError(null);
 
       const method = subscribed ? 'DELETE' : 'POST';
-      const response = await fetch(`/api/channels/${channelId}/subscribe`, {
+      const response = await api.get(`/api/channels/${channelId}/subscribe`, {
         method,
         credentials: 'include', // Include cookies for authentication
         headers: {
@@ -39,8 +40,8 @@ export default function SubscriptionButton({
         },
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         const newSubscribed = data.data.subscribed;
         const newSubscriberCount = data.data.subscriberCount;
 
@@ -56,10 +57,10 @@ export default function SubscriptionButton({
           window.location.href = '/auth';
           return;
         }
-        const errorData = await response.json();
+        const errorData = response.data as any;
         setError(errorData.error || 'Failed to update subscription');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error toggling subscription:', err);
       setError('An error occurred. Please try again.');
     } finally {

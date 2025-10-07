@@ -209,7 +209,7 @@ export async function handle2FAVerification(req: NextApiRequest, res: NextApiRes
 
     // Get user
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: (decoded as any).userId },
       select: {
         id: true,
         email: true,

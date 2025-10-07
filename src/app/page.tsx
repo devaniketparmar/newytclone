@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { api } from '../lib/axios';
 export default function Home() {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
@@ -11,11 +12,9 @@ export default function Home() {
     const checkAuthAndRedirect = async () => {
       try {
         // Check if user is authenticated
-        const response = await fetch('/api/auth/me', {
-          credentials: 'include'
-        });
+        const response = await api.get('/api/auth/me');
         
-        if (response.ok) {
+        if (response.status === 200) {
           // User is authenticated, redirect to video feed (like YouTube)
           router.push('/videos');
         } else {

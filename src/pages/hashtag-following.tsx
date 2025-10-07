@@ -6,6 +6,7 @@ import SearchHeader from '@/components/SearchHeader';
 import HashtagFollowButton from '@/components/HashtagFollowButton';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 
+import { api } from '../lib/axios';
 interface FollowedHashtag {
   id: string;
   name: string;
@@ -89,9 +90,9 @@ export default function HashtagFollowingPage({
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/hashtags/following?page=${pagination.page + 1}&limit=20`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get(`/api/hashtags/following?page=${pagination.page + 1}&limit=20`);
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           setRecentVideos(prev => [...prev, ...data.data.recentVideos]);
           setPagination(data.data.pagination);

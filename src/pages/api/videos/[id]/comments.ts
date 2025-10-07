@@ -267,7 +267,7 @@ async function handleCreateComment(req: NextApiRequest, res: NextApiResponse, vi
     const comment: any = await prisma.comment.create({
       data: {
         videoId,
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         content: content.trim(),
         parentId: parentId || null,
         status: 'ACTIVE'

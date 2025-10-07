@@ -3,6 +3,7 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import UniversalLayout from '@/components/UniversalLayout';
 
+import { api } from '../lib/axios';
 interface Video {
   id: string;
   title: string;
@@ -111,18 +112,13 @@ export default function MyVideosPage({ videos, stats, user }: MyVideosPageProps)
     }
 
     try {
-      const response = await fetch(`/api/videos/${videoId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.delete(`/api/videos/${videoId}`);
 
-      if (response.ok) {
+      if (response.status === 200) {
         // Refresh the page or remove from state
         router.reload();
       } else {
-        const error = await response.json();
+        const error = response.data;
         alert(`Error deleting video: ${error.error}`);
       }
     } catch (error) {
@@ -138,12 +134,7 @@ export default function MyVideosPage({ videos, stats, user }: MyVideosPageProps)
 
     try {
       const deletePromises = selectedVideos.map(videoId =>
-        fetch(`/api/videos/${videoId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
+        api.delete(`/api/videos/${videoId}`)
       );
 
       await Promise.all(deletePromises);

@@ -6,6 +6,7 @@ import VideoCard from '@/components/VideoCard';
 import Comments from '@/components/Comments';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 
+import { api } from '../../lib/axios';
 interface Video {
   id: string;
   title: string;
@@ -90,12 +91,10 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
 
   const loadPlaylistVideos = async (playlistId: string, index: number, shuffle: boolean) => {
     try {
-      const response = await fetch(`/api/playlists/${playlistId}`, {
-        credentials: 'include'
-      });
+      const response = await api.get(`/api/playlists/${playlistId}`);
       
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data;
         setPlaylistVideos(data.data.videos || []);
         setPlaylistIndex(index);
         setShuffleMode(shuffle);
@@ -175,17 +174,10 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/videos/${video.id}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ type: 'like' })
-      });
+      const response = await api.post(`/api/videos/${video.id}/like`, { type: 'like' });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data;
         if (data.success) {
           setIsLiked(data.data.liked);
           setIsDisliked(data.data.disliked);
@@ -208,17 +200,10 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/videos/${video.id}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ type: 'dislike' })
-      });
+      const response = await api.post(`/api/videos/${video.id}/like`, { type: 'dislike' });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data;
         if (data.success) {
           setIsLiked(data.data.liked);
           setIsDisliked(data.data.disliked);
@@ -242,13 +227,13 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
     setLoading(true);
     try {
       const method = isSubscribed ? 'DELETE' : 'POST';
-      const response = await fetch(`/api/channels/${video.channel.id}/subscribe`, {
+      const response = await api.get(`/api/channels/${video.channel.id}/subscribe`, {
         method,
         credentials: 'include'
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data;
         if (data.success) {
           setIsSubscribed(data.data.subscribed);
           setSubscriberCount(data.data.subscriberCount);

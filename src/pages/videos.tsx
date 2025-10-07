@@ -7,6 +7,7 @@ import CategoryBar from '@/components/CategoryBar';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 import VideoCard from '@/components/VideoCard';
 
+import { api } from '../lib/axios';
 interface Video {
   id: string;
   title: string;
@@ -76,9 +77,12 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
         params.append('search', search);
       }
 
-      const response = await fetch(`/api/videos?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get(`/api/videos?${params.toString()}`);
+      console.log('API Response:', response); // Debug log
+      
+      // Check if response exists and has the expected structure
+      if (response && response.status === 200 && response.data && response.data.success) {
+        const data = response.data;
         const newVideos = data.data || [];
         
         if (reset) {
@@ -90,6 +94,7 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
         // Check if there are more videos
         setHasMoreVideos(newVideos.length === 10);
       } else {
+        console.warn('API response does not have expected structure:', response);
         // Fallback to client-side filtering if API fails
         const clientFiltered = (videos || []).filter(video => {
           const matchesSearch = search === '' ||
@@ -118,6 +123,11 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
       }
     } catch (error) {
       console.error('Error fetching videos:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       // Fallback to client-side filtering
       const clientFiltered = (videos || []).filter(video => {
         const matchesSearch = search === '' ||

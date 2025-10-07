@@ -16,7 +16,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Verify token
   const decoded = JWTUtils.verifyToken(token);
-  if (!decoded || !decoded.userId) {
+  if (!decoded || !(decoded as any).userId) {
     return res.status(401).json({
       success: false,
       error: 'Invalid or expired token'
@@ -24,7 +24,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // Use user ID as the key for history storage
-  const key = decoded.userId;
+  const key = (decoded as any).userId;
 
   if (req.method === 'GET') {
     const data = historyStore.getHistory(key);

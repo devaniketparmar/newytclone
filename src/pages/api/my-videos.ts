@@ -31,8 +31,8 @@ async function handleGetUserVideos(req: NextApiRequest, res: NextApiResponse) {
     let userId = null;
     try {
       const decoded = JWTUtils.verifyToken(token);
-      if (decoded && decoded.userId) {
-        userId = decoded.userId;
+      if (decoded && (decoded as any).userId) {
+        userId = (decoded as any).userId;
       }
     } catch (error) {
       return res.status(401).json({

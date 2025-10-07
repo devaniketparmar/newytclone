@@ -38,7 +38,7 @@ async function handleGetMe(req: NextApiRequest, res: NextApiResponse) {
 
     // Get user data
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: (decoded as any).userId },
       select: {
         id: true,
         email: true,

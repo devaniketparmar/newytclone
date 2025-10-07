@@ -8,6 +8,7 @@ import HashtagFollowButton from '@/components/HashtagFollowButton';
 import HashtagAnalytics from '@/components/HashtagAnalytics';
 import HashtagReportButton from '@/components/HashtagReportButton';
 
+import { api } from '../../lib/axios';
 interface Video {
   id: string;
   title: string;
@@ -101,15 +102,15 @@ export default function HashtagPage({ videos: initialVideos, hashtag, hashtagId,
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/hashtags?action=search&hashtag=${encodeURIComponent(hashtag)}&limit=20&offset=${videos.length}`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get(`/api/hashtags?action=search&hashtag=${encodeURIComponent(hashtag)}&limit=20&offset=${videos.length}`);
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           setVideos(prev => [...prev, ...data.data.videos]);
           setPagination(data.data.pagination);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading more videos:', error);
     } finally {
       setLoading(false);
@@ -120,9 +121,9 @@ export default function HashtagPage({ videos: initialVideos, hashtag, hashtagId,
   useEffect(() => {
     const loadTrendingHashtags = async () => {
       try {
-        const response = await fetch('/api/hashtags?action=trending&limit=10');
-        if (response.ok) {
-          const data = await response.json();
+        const response = await api.get('/api/hashtags?action=trending&limit=10');
+        if (response.status === 200) {
+          const data = response.data as any;
           if (data.success) {
             setTrendingHashtags(data.data.hashtags.map((tag: any) => ({
               name: tag.name,
@@ -130,7 +131,7 @@ export default function HashtagPage({ videos: initialVideos, hashtag, hashtagId,
             })));
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading trending hashtags:', error);
       }
     };
@@ -395,21 +396,35 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           const userData = await userResponse.json();
           user = userData.data.user;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log('Could not fetch user data:', error);
       }
+    }
+
+    // Try to get hashtag record for ID
+    let hashtagId = '';
+    try {
+      const hashtagResponse = await fetch(`${baseUrl}/api/hashtags?action=get&hashtag=${encodeURIComponent(hashtag as string)}`);
+      if (hashtagResponse.ok) {
+        const hashtagData = await hashtagResponse.json();
+        if (hashtagData.success && hashtagData.data) {
+          hashtagId = hashtagData.data.id || '';
+        }
+      }
+    } catch (error) {
+      console.log('Could not fetch hashtag data:', error);
     }
 
     return {
       props: {
         videos,
         hashtag: hashtag as string,
-        hashtagId: hashtagRecord.id,
+        hashtagId,
         user,
         pagination
       }
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in getServerSideProps:', error);
     return {
       props: {

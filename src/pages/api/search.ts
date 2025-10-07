@@ -246,8 +246,8 @@ async function getSearchSuggestions(query: string, prisma: any) {
 
     // Combine and format suggestions
     const suggestions = [
-      ...titleSuggestions.map(v => ({ type: 'video', text: v.title })),
-      ...channelSuggestions.map(c => ({ type: 'channel', text: c.name }))
+      ...titleSuggestions.map((v: any) => ({ type: 'video', text: v.title })),
+      ...channelSuggestions.map((c: any) => ({ type: 'channel', text: c.name }))
     ].slice(0, 8);
 
     return suggestions;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { api } from '../lib/axios';
 interface WatchLaterButtonProps {
   videoId: string;
   isInWatchLater?: boolean;
@@ -24,7 +25,7 @@ export default function WatchLaterButton({
     setLoading(true);
     try {
       const method = inWatchLater ? 'DELETE' : 'POST';
-      const response = await fetch(`/api/library/watch-later/${videoId}`, {
+      const response = await api.get(`/api/library/watch-later/${videoId}`, {
         method,
         credentials: 'include',
         headers: {
@@ -32,7 +33,7 @@ export default function WatchLaterButton({
         },
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         const newState = !inWatchLater;
         setInWatchLater(newState);
         onToggle?.(newState);

@@ -5,6 +5,7 @@ import UniversalLayout from '@/components/UniversalLayout';
 import VideoCard from '@/components/VideoCard';
 import VideoMenu from '@/components/VideoMenu';
 
+import { api } from '../../lib/axios';
 interface PlaylistVideo {
   id: string;
   title: string;
@@ -121,9 +122,9 @@ export default function PlaylistPage({ user, playlist: initialPlaylist }: Playli
         body: JSON.stringify(editForm),
       });
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status === 200) {
         setPlaylist(prev => ({
           ...prev,
           name: data.data.name,
@@ -149,12 +150,12 @@ export default function PlaylistPage({ user, playlist: initialPlaylist }: Playli
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/playlists/${playlist.id}`, {
+      const response = await api.get(`/api/playlists/${playlist.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         router.push('/library');
       } else {
         console.error('Failed to delete playlist');

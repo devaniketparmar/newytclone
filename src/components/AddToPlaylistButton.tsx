@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
+import { api } from '../lib/axios';
 interface Playlist {
   id: string;
   name: string;
@@ -45,17 +46,17 @@ export default function AddToPlaylistButton({
 
   const fetchPlaylists = async () => {
     try {
-      const response = await fetch('/api/playlists', {
+      const response = await api.get('/api/playlists', {
         credentials: 'include',
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         setPlaylists(data.data || []);
       } else {
         setError('Failed to load playlists');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching playlists:', error);
       setError('Failed to load playlists');
     }
@@ -71,18 +72,11 @@ export default function AddToPlaylistButton({
     setError(null);
 
     try {
-      const response = await fetch(`/api/playlists/${selectedPlaylistId}/videos`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ videoId }),
-      });
+      const response = await api.post(`/api/playlists/${selectedPlaylistId}/videos`, { videoId });
 
-      const data = await response.json();
+      const data = response.data as any;
 
-      if (response.ok) {
+      if (response.status === 200) {
         setShowModal(false);
         setSelectedPlaylistId('');
         onVideoAdded?.(selectedPlaylistId);
@@ -91,7 +85,7 @@ export default function AddToPlaylistButton({
       } else {
         setError(data.error || 'Failed to add video to playlist');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding video to playlist:', error);
       setError('Failed to add video to playlist');
     } finally {

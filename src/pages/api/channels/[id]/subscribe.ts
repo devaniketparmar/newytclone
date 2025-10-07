@@ -45,7 +45,7 @@ async function handleSubscribe(req: NextApiRequest, res: NextApiResponse, channe
 
     // Verify token
     const decoded = JWTUtils.verifyToken(token);
-    if (!decoded || !decoded.userId) {
+    if (!decoded || !(decoded as any).userId) {
       return res.status(401).json({
         success: false,
         error: 'Invalid or expired token'
@@ -71,7 +71,7 @@ async function handleSubscribe(req: NextApiRequest, res: NextApiResponse, channe
     }
 
     // Check if user is trying to subscribe to their own channel
-    if (channel.userId === decoded.userId) {
+    if (channel.userId === (decoded as any).userId) {
       return res.status(400).json({
         success: false,
         error: 'You cannot subscribe to your own channel'
@@ -81,7 +81,7 @@ async function handleSubscribe(req: NextApiRequest, res: NextApiResponse, channe
     // Check if user is already subscribed
     const existingSubscription = await prisma.subscription.findFirst({
       where: {
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         channelId
       }
     });
@@ -96,7 +96,7 @@ async function handleSubscribe(req: NextApiRequest, res: NextApiResponse, channe
     // Create subscription
     await prisma.subscription.create({
       data: {
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         channelId
       }
     });
@@ -119,7 +119,7 @@ async function handleSubscribe(req: NextApiRequest, res: NextApiResponse, channe
         title: 'New Subscriber',
         message: `You have a new subscriber!`,
         data: {
-          subscriberId: decoded.userId,
+          subscriberId: (decoded as any).userId,
           channelId
         }
       }
@@ -159,7 +159,7 @@ async function handleUnsubscribe(req: NextApiRequest, res: NextApiResponse, chan
 
     // Verify token
     const decoded = JWTUtils.verifyToken(token);
-    if (!decoded || !decoded.userId) {
+    if (!decoded || !(decoded as any).userId) {
       return res.status(401).json({
         success: false,
         error: 'Invalid or expired token'
@@ -186,7 +186,7 @@ async function handleUnsubscribe(req: NextApiRequest, res: NextApiResponse, chan
     // Check if user is subscribed
     const existingSubscription = await prisma.subscription.findFirst({
       where: {
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         channelId
       }
     });
@@ -242,8 +242,8 @@ async function handleGetSubscriptionStatus(req: NextApiRequest, res: NextApiResp
     if (token) {
       try {
         const decoded = JWTUtils.verifyToken(token);
-        if (decoded && decoded.userId) {
-          userId = decoded.userId;
+        if (decoded && (decoded as any).userId) {
+          userId = (decoded as any).userId;
         }
       } catch (error) {
         console.log('Token verification failed, proceeding without authentication');

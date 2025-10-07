@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
+import { api } from '../lib/axios';
 interface ModerationDashboardProps {
   className?: string;
 }
@@ -68,9 +69,9 @@ const ModerationDashboard: React.FC<ModerationDashboardProps> = ({ className = '
       setError(null);
 
       if (activeTab === 'overview') {
-        const response = await fetch('/api/hashtags/moderation?action=stats');
-        if (response.ok) {
-          const data = await response.json();
+        const response = await api.get('/api/hashtags/moderation?action=stats');
+        if (response.status === 200) {
+          const data = response.data as any;
           if (data.success) {
             setStats(data.data);
           } else {
@@ -78,9 +79,9 @@ const ModerationDashboard: React.FC<ModerationDashboardProps> = ({ className = '
           }
         }
       } else if (activeTab === 'queue') {
-        const response = await fetch('/api/hashtags/moderation?action=list&status=PENDING');
-        if (response.ok) {
-          const data = await response.json();
+        const response = await api.get('/api/hashtags/moderation?action=list&status=PENDING');
+        if (response.status === 200) {
+          const data = response.data as any;
           if (data.success) {
             setModerationItems(data.data.items);
           } else {
@@ -88,7 +89,7 @@ const ModerationDashboard: React.FC<ModerationDashboardProps> = ({ className = '
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error);
       setError('An error occurred while fetching data');
     } finally {
@@ -100,20 +101,14 @@ const ModerationDashboard: React.FC<ModerationDashboardProps> = ({ className = '
     try {
       setActionLoading(hashtagId);
       
-      const response = await fetch('/api/hashtags/moderation?action=moderate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          hashtagId,
-          action,
-          reason,
-        }),
+      const response = await api.post('/api/hashtags/moderation?action=moderate', {
+        hashtagId,
+        action,
+        reason,
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           // Refresh the data
           await fetchData();
@@ -123,7 +118,7 @@ const ModerationDashboard: React.FC<ModerationDashboardProps> = ({ className = '
       } else {
         setError('Failed to perform moderation action');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error performing moderation action:', error);
       setError('An error occurred while performing the action');
     } finally {

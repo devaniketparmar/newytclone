@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ success: false, error: 'Invalid token' });
     }
 
-    const userId = decoded.userId;
+    const userId = (decoded as any).userId;
     const { action = 'list', hashtag } = req.query;
 
     if (req.method === 'GET') {

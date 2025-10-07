@@ -4,6 +4,7 @@ import UniversalLayout from '@/components/UniversalLayout';
 import SearchHeader from '@/components/SearchHeader';
 import ModerationDashboard from '@/components/ModerationDashboard';
 
+import { api } from '../lib/axios';
 interface ModerationPageProps {
   user?: any;
 }

@@ -57,7 +57,7 @@ async function handleUpdateComment(req: NextApiRequest, res: NextApiResponse, vi
       where: {
         id: commentId,
         videoId,
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         status: 'ACTIVE'
       }
     });
@@ -169,7 +169,7 @@ async function handleDeleteComment(req: NextApiRequest, res: NextApiResponse, vi
       where: {
         id: commentId,
         videoId,
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         status: 'ACTIVE'
       }
     });
@@ -267,7 +267,7 @@ async function handleLikeComment(req: NextApiRequest, res: NextApiResponse, vide
     // Check if user already liked/disliked this comment
     const existingLike = await prisma.like.findFirst({
       where: {
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         commentId,
         type: type === 'like' ? 'LIKE' : 'DISLIKE'
       }
@@ -302,7 +302,7 @@ async function handleLikeComment(req: NextApiRequest, res: NextApiResponse, vide
     // Check if user has opposite reaction
     const oppositeLike = await prisma.like.findFirst({
       where: {
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         commentId,
         type: type === 'like' ? 'DISLIKE' : 'LIKE'
       }
@@ -340,7 +340,7 @@ async function handleLikeComment(req: NextApiRequest, res: NextApiResponse, vide
     // Create new like/dislike
     await prisma.like.create({
       data: {
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         commentId,
         type: type === 'like' ? 'LIKE' : 'DISLIKE'
       }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
+import { api } from '../lib/axios';
 interface HashtagAnalyticsProps {
   hashtag: string;
   className?: string;
@@ -97,10 +98,10 @@ const HashtagAnalytics: React.FC<HashtagAnalyticsProps> = ({ hashtag, className 
         action: activeTab,
       });
 
-      const response = await fetch(`/api/hashtags/analytics?${params.toString()}`);
+      const response = await api.get(`/api/hashtags/analytics?${params.toString()}`);
       
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           if (activeTab === 'trending') {
             setTrendingData(data.data);

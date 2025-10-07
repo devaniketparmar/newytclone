@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Sidebar from './Sidebar';
 import Search from './Search';
 
+import { api } from '../lib/axios';
 interface UniversalLayoutProps {
   children: React.ReactNode;
   user?: any;
@@ -23,12 +24,12 @@ export default function UniversalLayout({
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/logout', {
+      const response = await api.get('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         // Clear any client-side state if needed
         // Redirect to auth page
         router.push('/auth');
@@ -126,7 +127,10 @@ export default function UniversalLayout({
                           onError={(e) => {
                             // Fallback to initials if image fails to load
                             e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                            const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (nextElement) {
+                              nextElement.style.display = 'flex';
+                            }
                           }}
                         />
                       ) : null}

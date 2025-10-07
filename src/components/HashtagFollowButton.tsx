@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
+import { api } from '../lib/axios';
 interface HashtagFollowButtonProps {
   hashtag: string;
   initialFollowStatus?: boolean;
@@ -38,16 +39,16 @@ const HashtagFollowButton: React.FC<HashtagFollowButtonProps> = ({
 
   const fetchHashtagData = async () => {
     try {
-      const response = await fetch(`/api/hashtags/${encodeURIComponent(hashtag)}/follow`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get(`/api/hashtags/${encodeURIComponent(hashtag)}/follow`);
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           setHashtagData(data.data.hashtag);
           setIsFollowing(data.data.isFollowing);
           setFollowerCount(data.data.hashtag.followerCount);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching hashtag data:', error);
     }
   };
@@ -57,16 +58,11 @@ const HashtagFollowButton: React.FC<HashtagFollowButtonProps> = ({
 
     setLoading(true);
     try {
-      const method = isFollowing ? 'DELETE' : 'POST';
-      const response = await fetch(`/api/hashtags/${encodeURIComponent(hashtag)}/follow`, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const method = isFollowing ? 'delete' : 'post';
+      const response = await api[method](`/api/hashtags/${encodeURIComponent(hashtag)}/follow`);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           const newFollowStatus = !isFollowing;
           const newFollowerCount = newFollowStatus ? followerCount + 1 : followerCount - 1;
@@ -79,10 +75,10 @@ const HashtagFollowButton: React.FC<HashtagFollowButtonProps> = ({
           }
         }
       } else {
-        const errorData = await response.json();
+        const errorData = response.data as any;
         console.error('Error toggling follow:', errorData.error);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling follow:', error);
     } finally {
       setLoading(false);

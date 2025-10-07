@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import SmartHashtagInput from '@/components/SmartHashtagInput';
 
+import { api } from '../lib/axios';
 interface UploadFormData {
   title: string;
   description: string;
@@ -85,12 +86,10 @@ export default function UploadPage() {
   React.useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/me', {
-          credentials: 'include'
-        });
+        const response = await api.get('/api/auth/me');
         
-        if (response.ok) {
-          const userData = await response.json();
+        if (response.status === 200) {
+          const userData = response.data;
           setUser(userData.data);
         } else {
           router.push('/auth');
@@ -285,10 +284,7 @@ export default function UploadPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
+      await api.post('/api/auth/logout');
       router.push('/auth');
     } catch (error) {
       console.error('Logout failed:', error);

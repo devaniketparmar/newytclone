@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { api } from '../lib/axios';
 interface FormData {
   email: string;
   username: string;
@@ -45,19 +46,13 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         // Handle login
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-            rememberMe: false
-          }),
+        const response = await api.post('/api/auth/login', {
+          email: formData.email,
+          password: formData.password,
+          rememberMe: false
         });
 
-        const result = await response.json();
+        const result = response.data as any;
         
         if (result.success) {
           setSuccess('Login successful! Welcome back!');
@@ -82,22 +77,16 @@ export default function AuthPage() {
           return;
         }
 
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            username: formData.username,
-            password: formData.password,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            agreeToTerms: formData.agreeToTerms
-          }),
+        const response = await api.post('/api/auth/register', {
+          email: formData.email,
+          username: formData.username,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          agreeToTerms: formData.agreeToTerms
         });
 
-        const result = await response.json();
+        const result = response.data as any;
         
         if (result.success) {
           setSuccess('Registration successful! Welcome to YouTube Clone!');

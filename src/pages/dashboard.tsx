@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
+import { api } from '../lib/axios';
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<{
@@ -28,12 +29,10 @@ export default function Dashboard() {
     // Check if user is authenticated
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/me', {
-          credentials: 'include'
-        });
+        const response = await api.get('/api/auth/me');
         
-        if (response.ok) {
-          const userData = await response.json();
+        if (response.status === 200) {
+          const userData = response.data as any;
           setUser(userData.data);
         } else {
           router.push('/videos');
@@ -51,10 +50,7 @@ export default function Dashboard() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
+      await api.post('/api/auth/logout');
       router.push('/auth');
     } catch (error) {
       console.error('Logout failed:', error);

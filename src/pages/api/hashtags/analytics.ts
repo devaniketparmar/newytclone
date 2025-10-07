@@ -93,20 +93,20 @@ async function getHashtagOverview(req: NextApiRequest, res: NextApiResponse, pri
     });
 
     // Calculate metrics
-    const totalViews = periodAnalytics.reduce((sum, analytics) => sum + analytics.views, 0);
-    const totalEngagement = periodAnalytics.reduce((sum, analytics) => sum + analytics.engagement, 0);
-    const totalNewFollowers = periodAnalytics.reduce((sum, analytics) => sum + analytics.newFollowers, 0);
-    const totalVideosAdded = periodAnalytics.reduce((sum, analytics) => sum + analytics.videosAdded, 0);
+    const totalViews = periodAnalytics.reduce((sum: number, analytics: any) => sum + analytics.views, 0);
+    const totalEngagement = periodAnalytics.reduce((sum: number, analytics: any) => sum + analytics.engagement, 0);
+    const totalNewFollowers = periodAnalytics.reduce((sum: number, analytics: any) => sum + analytics.newFollowers, 0);
+    const totalVideosAdded = periodAnalytics.reduce((sum: number, analytics: any) => sum + analytics.videosAdded, 0);
     const averageTrendingScore = periodAnalytics.length > 0 
-      ? periodAnalytics.reduce((sum, analytics) => sum + Number(analytics.trendingScore), 0) / periodAnalytics.length 
+      ? periodAnalytics.reduce((sum: number, analytics: any) => sum + Number(analytics.trendingScore), 0) / periodAnalytics.length 
       : 0;
 
     // Calculate growth rates
     const firstHalf = periodAnalytics.slice(0, Math.floor(periodAnalytics.length / 2));
     const secondHalf = periodAnalytics.slice(Math.floor(periodAnalytics.length / 2));
     
-    const firstHalfViews = firstHalf.reduce((sum, analytics) => sum + analytics.views, 0);
-    const secondHalfViews = secondHalf.reduce((sum, analytics) => sum + analytics.views, 0);
+    const firstHalfViews = firstHalf.reduce((sum: number, analytics: any) => sum + analytics.views, 0);
+    const secondHalfViews = secondHalf.reduce((sum: number, analytics: any) => sum + analytics.views, 0);
     const viewsGrowthRate = firstHalfViews > 0 ? ((secondHalfViews - firstHalfViews) / firstHalfViews) * 100 : 0;
 
     // Get recent videos with this hashtag
@@ -163,7 +163,7 @@ async function getHashtagOverview(req: NextApiRequest, res: NextApiResponse, pri
           viewsGrowthRate,
           engagementRate: totalViews > 0 ? (totalEngagement / totalViews) * 100 : 0,
         },
-        analytics: periodAnalytics.map(analytics => ({
+        analytics: periodAnalytics.map((analytics: any) => ({
           date: analytics.date.toISOString().split('T')[0],
           views: analytics.views,
           engagement: analytics.engagement,
@@ -171,7 +171,7 @@ async function getHashtagOverview(req: NextApiRequest, res: NextApiResponse, pri
           videosAdded: analytics.videosAdded,
           trendingScore: Number(analytics.trendingScore),
         })),
-        recentVideos: recentVideos.map(video => ({
+        recentVideos: recentVideos.map((video: any) => ({
           id: video.id,
           title: video.title,
           thumbnailUrl: video.thumbnailUrl,
@@ -237,10 +237,10 @@ async function getTrendingAnalytics(req: NextApiRequest, res: NextApiResponse, p
       take: 20,
     });
 
-    const formattedTrending = trendingHashtags.map(hashtag => {
-      const totalViews = hashtag.analytics.reduce((sum, analytics) => sum + analytics.views, 0);
-      const totalEngagement = hashtag.analytics.reduce((sum, analytics) => sum + analytics.engagement, 0);
-      const totalNewFollowers = hashtag.analytics.reduce((sum, analytics) => sum + analytics.newFollowers, 0);
+    const formattedTrending = trendingHashtags.map((hashtag: any) => {
+      const totalViews = hashtag.analytics.reduce((sum: number, analytics: any) => sum + analytics.views, 0);
+      const totalEngagement = hashtag.analytics.reduce((sum: number, analytics: any) => sum + analytics.engagement, 0);
+      const totalNewFollowers = hashtag.analytics.reduce((sum: number, analytics: any) => sum + analytics.newFollowers, 0);
 
       return {
         id: hashtag.id,
@@ -255,8 +255,8 @@ async function getTrendingAnalytics(req: NextApiRequest, res: NextApiResponse, p
           engagementRate: totalViews > 0 ? (totalEngagement / totalViews) * 100 : 0,
         },
         growth: {
-          viewsGrowth: calculateGrowthRate(hashtag.analytics.map(a => a.views)),
-          followersGrowth: calculateGrowthRate(hashtag.analytics.map(a => a.newFollowers)),
+          viewsGrowth: calculateGrowthRate(hashtag.analytics.map((a: any) => a.views)),
+          followersGrowth: calculateGrowthRate(hashtag.analytics.map((a: any) => a.newFollowers)),
         },
       };
     });
@@ -308,20 +308,20 @@ async function getPerformanceAnalytics(req: NextApiRequest, res: NextApiResponse
 
     // Calculate performance metrics
     const performanceMetrics = {
-      views: analytics.map(a => ({ date: a.date.toISOString().split('T')[0], value: a.views })),
-      engagement: analytics.map(a => ({ date: a.date.toISOString().split('T')[0], value: a.engagement })),
-      followers: analytics.map(a => ({ date: a.date.toISOString().split('T')[0], value: a.newFollowers })),
-      videos: analytics.map(a => ({ date: a.date.toISOString().split('T')[0], value: a.videosAdded })),
-      trendingScore: analytics.map(a => ({ date: a.date.toISOString().split('T')[0], value: Number(a.trendingScore) })),
+      views: analytics.map((a: any) => ({ date: a.date.toISOString().split('T')[0], value: a.views })),
+      engagement: analytics.map((a: any) => ({ date: a.date.toISOString().split('T')[0], value: a.engagement })),
+      followers: analytics.map((a: any) => ({ date: a.date.toISOString().split('T')[0], value: a.newFollowers })),
+      videos: analytics.map((a: any) => ({ date: a.date.toISOString().split('T')[0], value: a.videosAdded })),
+      trendingScore: analytics.map((a: any) => ({ date: a.date.toISOString().split('T')[0], value: Number(a.trendingScore) })),
     };
 
     // Calculate averages and trends
     const averages = {
-      views: analytics.length > 0 ? analytics.reduce((sum, a) => sum + a.views, 0) / analytics.length : 0,
-      engagement: analytics.length > 0 ? analytics.reduce((sum, a) => sum + a.engagement, 0) / analytics.length : 0,
-      followers: analytics.length > 0 ? analytics.reduce((sum, a) => sum + a.newFollowers, 0) / analytics.length : 0,
-      videos: analytics.length > 0 ? analytics.reduce((sum, a) => sum + a.videosAdded, 0) / analytics.length : 0,
-      trendingScore: analytics.length > 0 ? analytics.reduce((sum, a) => sum + Number(a.trendingScore), 0) / analytics.length : 0,
+      views: analytics.length > 0 ? analytics.reduce((sum: number, a: any) => sum + a.views, 0) / analytics.length : 0,
+      engagement: analytics.length > 0 ? analytics.reduce((sum: number, a: any) => sum + a.engagement, 0) / analytics.length : 0,
+      followers: analytics.length > 0 ? analytics.reduce((sum: number, a: any) => sum + a.newFollowers, 0) / analytics.length : 0,
+      videos: analytics.length > 0 ? analytics.reduce((sum: number, a: any) => sum + a.videosAdded, 0) / analytics.length : 0,
+      trendingScore: analytics.length > 0 ? analytics.reduce((sum: number, a: any) => sum + Number(a.trendingScore), 0) / analytics.length : 0,
     };
 
     return res.status(200).json({
@@ -371,15 +371,15 @@ async function getComparisonAnalytics(req: NextApiRequest, res: NextApiResponse,
     });
 
     const comparison = await Promise.all(
-      similarHashtags.map(async (similarHashtag) => {
+      similarHashtags.map(async (similarHashtag: any) => {
         const analytics = await prisma.hashtagAnalytics.findMany({
           where: { hashtagId: similarHashtag.id },
           orderBy: { date: 'desc' },
           take: 7, // Last 7 days
         });
 
-        const totalViews = analytics.reduce((sum, a) => sum + a.views, 0);
-        const totalEngagement = analytics.reduce((sum, a) => sum + a.engagement, 0);
+        const totalViews = analytics.reduce((sum: number, a: any) => sum + a.views, 0);
+        const totalEngagement = analytics.reduce((sum: number, a: any) => sum + a.engagement, 0);
 
         return {
           id: similarHashtag.id,
@@ -473,8 +473,8 @@ function calculateGrowthRate(values: number[]): number {
   if (values.length < 2) return 0;
   const firstHalf = values.slice(0, Math.floor(values.length / 2));
   const secondHalf = values.slice(Math.floor(values.length / 2));
-  const firstAvg = firstHalf.reduce((sum, val) => sum + val, 0) / firstHalf.length;
-  const secondAvg = secondHalf.reduce((sum, val) => sum + val, 0) / secondHalf.length;
+  const firstAvg = firstHalf.reduce((sum: number, val: any) => sum + val, 0) / firstHalf.length;
+  const secondAvg = secondHalf.reduce((sum: number, val: any) => sum + val, 0) / secondHalf.length;
   return firstAvg > 0 ? ((secondAvg - firstAvg) / firstAvg) * 100 : 0;
 }
 
@@ -486,8 +486,8 @@ function generateInsights(analytics: any[], hashtag: any): string[] {
     return insights;
   }
 
-  const totalViews = analytics.reduce((sum, a) => sum + a.views, 0);
-  const totalEngagement = analytics.reduce((sum, a) => sum + a.engagement, 0);
+  const totalViews = analytics.reduce((sum: number, a: any) => sum + a.views, 0);
+  const totalEngagement = analytics.reduce((sum: number, a: any) => sum + a.engagement, 0);
   const avgEngagementRate = totalViews > 0 ? (totalEngagement / totalViews) * 100 : 0;
 
   // Engagement insights

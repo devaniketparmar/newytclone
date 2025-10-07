@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { api } from '../lib/axios';
 
 interface Playlist {
   id: string;
@@ -68,17 +69,9 @@ export default function VideoMenu({
 
   const fetchPlaylists = async () => {
     try {
-      const response = await fetch('/api/playlists', {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPlaylists(data.data || []);
-      } else {
-        setError('Failed to load playlists');
-      }
-    } catch (error) {
+      const response = await api.get('/api/playlists');
+      setPlaylists((response.data as any).data || []);
+    } catch (error: any) {
       console.error('Error fetching playlists:', error);
       setError('Failed to load playlists');
     }
@@ -86,15 +79,9 @@ export default function VideoMenu({
 
   const checkWatchLaterStatus = async () => {
     try {
-      const response = await fetch(`/api/library/watch-later/${videoId}`, {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setIsInWatchLater(data.data?.isInWatchLater || false);
-      }
-    } catch (error) {
+      const response = await api.get(`/api/library/watch-later/${videoId}`);
+      setIsInWatchLater((response.data as any).data?.isInWatchLater || false);
+    } catch (error: any) {
       console.error('Error checking watch later status:', error);
     }
   };
@@ -104,20 +91,13 @@ export default function VideoMenu({
     setError(null);
 
     try {
-      const method = isInWatchLater ? 'DELETE' : 'POST';
-      const response = await fetch(`/api/library/watch-later/${videoId}`, {
-        method,
-        credentials: 'include',
-      });
+      const method = isInWatchLater ? 'delete' : 'post';
+      const response = await api[method](`/api/library/watch-later/${videoId}`);
 
-      if (response.ok) {
-        setIsInWatchLater(!isInWatchLater);
-        setShowMenu(false);
-        alert(isInWatchLater ? 'Removed from Watch Later' : 'Added to Watch Later');
-      } else {
-        setError('Failed to update Watch Later');
-      }
-    } catch (error) {
+      setIsInWatchLater(!isInWatchLater);
+      setShowMenu(false);
+      alert(isInWatchLater ? 'Removed from Watch Later' : 'Added to Watch Later');
+    } catch (error: any) {
       console.error('Error updating watch later:', error);
       setError('Failed to update Watch Later');
     } finally {
@@ -135,29 +115,16 @@ export default function VideoMenu({
     setError(null);
 
     try {
-      const response = await fetch(`/api/playlists/${selectedPlaylistId}/videos`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ videoId }),
-      });
+      const response = await api.post(`/api/playlists/${selectedPlaylistId}/videos`, { videoId });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setShowPlaylistModal(false);
-        setSelectedPlaylistId('');
-        setShowMenu(false);
-        onVideoAdded?.(selectedPlaylistId);
-        alert('Video added to playlist successfully!');
-      } else {
-        setError(data.error || 'Failed to add video to playlist');
-      }
-    } catch (error) {
+      setShowPlaylistModal(false);
+      setSelectedPlaylistId('');
+      setShowMenu(false);
+      onVideoAdded?.(selectedPlaylistId);
+      alert('Video added to playlist successfully!');
+    } catch (error: any) {
       console.error('Error adding video to playlist:', error);
-      setError('Failed to add video to playlist');
+      setError(error.response?.data?.error || 'Failed to add video to playlist');
     } finally {
       setLoading(false);
     }
@@ -173,7 +140,7 @@ export default function VideoMenu({
           text: `Check out this video: ${videoTitle}`,
           url: shareUrl,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.log('Share cancelled');
       }
     } else {
@@ -181,7 +148,7 @@ export default function VideoMenu({
       try {
         await navigator.clipboard.writeText(shareUrl);
         alert('Link copied to clipboard!');
-      } catch (error) {
+      } catch (error: any) {
         // Fallback: show prompt
         prompt('Copy this link:', shareUrl);
       }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+import { api } from '../lib/axios';
 interface HashtagRecommendation {
   hashtag: string;
   confidence: number;
@@ -25,20 +26,20 @@ interface SmartHashtagInputProps {
 }
 
 const SmartHashtagInput: React.FC<SmartHashtagInputProps> = ({
-  value,
+  value = [],
   onChange,
-  placeholder,
-  maxHashtags,
-  showRecommendations,
+  placeholder = "Add hashtags...",
+  maxHashtags = 10,
+  showRecommendations = true,
   videoContent,
-  className,
+  className = '',
 }) => {
-  // Set default values
-  const hashtags = value || [];
-  const placeholderText = placeholder || "Add hashtags...";
-  const maxTags = maxHashtags || 10;
-  const showRecs = showRecommendations !== false;
-  const cssClass = className || '';
+  // Use the default values directly
+  const hashtags = value;
+  const placeholderText = placeholder;
+  const maxTags = maxHashtags;
+  const showRecs = showRecommendations;
+  const cssClass = className;
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<HashtagRecommendation[]>([]);
   const [recommendations, setRecommendations] = useState<HashtagRecommendation[]>([]);
@@ -74,23 +75,17 @@ const SmartHashtagInput: React.FC<SmartHashtagInputProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/hashtags/recommendations?action=recommend', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: videoContent.title,
-          description: videoContent.description || '',
-          category: videoContent.category,
-          duration: videoContent.duration || 0,
-          existingHashtags: hashtags,
-          maxRecommendations: 8,
-        }),
+      const response = await api.post('/api/hashtags/recommendations?action=recommend', {
+        title: videoContent.title,
+        description: videoContent.description || '',
+        category: videoContent.category,
+        duration: videoContent.duration || 0,
+        existingHashtags: hashtags,
+        maxRecommendations: 8,
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           setRecommendations(data.data.recommendations);
         } else {
@@ -99,7 +94,7 @@ const SmartHashtagInput: React.FC<SmartHashtagInputProps> = ({
       } else {
         setError('Failed to load recommendations');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading recommendations:', error);
       setError('An error occurred while loading recommendations');
     } finally {
@@ -114,15 +109,15 @@ const SmartHashtagInput: React.FC<SmartHashtagInputProps> = ({
     }
 
     try {
-      const response = await fetch(`/api/hashtags/recommendations?action=suggestions&q=${encodeURIComponent(query)}&limit=8`);
+      const response = await api.get(`/api/hashtags/recommendations?action=suggestions&q=${encodeURIComponent(query)}&limit=8`);
       
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           setSuggestions(data.data.suggestions);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading suggestions:', error);
     }
   };

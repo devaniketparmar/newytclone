@@ -74,7 +74,7 @@ async function handleLikeVideo(req: NextApiRequest, res: NextApiResponse, videoI
     // Check if user already liked/disliked this video
     const existingLike = await prisma.like.findFirst({
       where: {
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         videoId,
         type: type === 'like' ? 'LIKE' : 'DISLIKE'
       }
@@ -109,7 +109,7 @@ async function handleLikeVideo(req: NextApiRequest, res: NextApiResponse, videoI
     // Check if user has opposite reaction
     const oppositeLike = await prisma.like.findFirst({
       where: {
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         videoId,
         type: type === 'like' ? 'DISLIKE' : 'LIKE'
       }
@@ -147,7 +147,7 @@ async function handleLikeVideo(req: NextApiRequest, res: NextApiResponse, videoI
     // Create new like/dislike
     await prisma.like.create({
       data: {
-        userId: decoded.userId,
+        userId: (decoded as any).userId,
         videoId,
         type: type === 'like' ? 'LIKE' : 'DISLIKE'
       }

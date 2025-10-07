@@ -3,6 +3,7 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import UniversalLayout from '@/components/UniversalLayout';
 
+import { api } from '../../lib/axios';
 interface Video {
   id: string;
   title: string;
@@ -52,18 +53,12 @@ export default function EditVideoPage({ video, user }: EditVideoPageProps) {
     setError('');
 
     try {
-      const response = await fetch(`/api/videos/${video.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await api.put(`/api/videos/${video.id}`, formData);
 
-      if (response.ok) {
+      if (response.status === 200) {
         router.push('/my-videos');
       } else {
-        const errorData = await response.json();
+        const errorData = response.data as any;
         setError(errorData.error || 'Failed to update video');
       }
     } catch (error) {
@@ -80,17 +75,17 @@ export default function EditVideoPage({ video, user }: EditVideoPageProps) {
     }
 
     try {
-      const response = await fetch(`/api/videos/${video.id}`, {
+      const response = await api.get(`/api/videos/${video.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         router.push('/my-videos');
       } else {
-        const errorData = await response.json();
+        const errorData = response.data as any;
         alert(`Error deleting video: ${errorData.error}`);
       }
     } catch (error) {

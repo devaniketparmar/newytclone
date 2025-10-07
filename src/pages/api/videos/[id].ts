@@ -196,9 +196,9 @@ async function handleVideoUpdate(req: NextApiRequest, res: NextApiResponse, vide
 
     // Update video metadata
     const metadata = {
-      originalFileName: video.metadata ? JSON.parse(video.metadata).originalFileName : '',
-      fileType: video.metadata ? JSON.parse(video.metadata).fileType : '',
-      uploadDate: video.metadata ? JSON.parse(video.metadata).uploadDate : new Date().toISOString(),
+      originalFileName: video.metadata ? (JSON.parse(video.metadata as string) as any).originalFileName : '',
+      fileType: video.metadata ? (JSON.parse(video.metadata as string) as any).fileType : '',
+      uploadDate: video.metadata ? (JSON.parse(video.metadata as string) as any).uploadDate : new Date().toISOString(),
       language: language || 'en',
       tags: tagsArray,
       ageRestriction: ageRestriction || false,

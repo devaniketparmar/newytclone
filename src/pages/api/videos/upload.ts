@@ -53,7 +53,7 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
 
     // Get user's channel
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: (decoded as any).userId },
       include: { channels: true }
     });
 
@@ -74,7 +74,7 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
       filter: function ({ name, originalFilename, mimetype }) {
         // Allow video files and image files (for custom thumbnails)
         console.log('Filter check:', { name, originalFilename, mimetype });
-        return mimetype && (mimetype.includes('video') || mimetype.includes('image'));
+        return !!(mimetype && (mimetype.includes('video') || mimetype.includes('image')));
       }
     });
 
@@ -144,7 +144,7 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
     // Check by MIME type or file extension
     const isValidVideoMimeType = videoFile.mimetype && allowedVideoTypes.includes(videoFile.mimetype);
     const isValidVideoExtension = videoFile.originalFilename && allowedVideoExtensions.some(ext => 
-      videoFile.originalFilename.toLowerCase().endsWith(ext)
+      videoFile.originalFilename!.toLowerCase().endsWith(ext)
     );
     
     if (!isValidVideoMimeType && !isValidVideoExtension) {
@@ -161,7 +161,7 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
       
       const isValidThumbnailMimeType = customThumbnailFile.mimetype && allowedThumbnailTypes.includes(customThumbnailFile.mimetype);
       const isValidThumbnailExtension = customThumbnailFile.originalFilename && allowedThumbnailExtensions.some(ext => 
-        customThumbnailFile.originalFilename.toLowerCase().endsWith(ext)
+        customThumbnailFile.originalFilename!.toLowerCase().endsWith(ext)
       );
       
       if (!isValidThumbnailMimeType && !isValidThumbnailExtension) {
@@ -394,6 +394,7 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
               console.warn('Failed to generate thumbnail during processing, creating placeholder:', thumbnailError);
               
               // Create placeholder thumbnail
+              const thumbnailsDir = path.join(process.cwd(), 'uploads', 'thumbnails');
               const placeholderFileName = `${path.parse(fileName).name}.svg`;
               const placeholderPath = path.join(thumbnailsDir, placeholderFileName);
               await ThumbnailGenerator.generatePlaceholderThumbnail(placeholderPath, 320, 180);

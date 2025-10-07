@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ success: false, error: 'Invalid token' });
     }
 
-    const userId = decoded.userId;
+    const userId = (decoded as any).userId;
     const { hashtag } = req.query;
 
     if (!hashtag) {
@@ -36,15 +36,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     switch (req.method) {
       case 'POST':
         // Follow hashtag
-        return await followHashtag(req, res, prisma, userId, hashtagRecord.id);
+        return await followHashtag(req, res, prisma, userId, hashtagRecord.id as string);
       
       case 'DELETE':
         // Unfollow hashtag
-        return await unfollowHashtag(req, res, prisma, userId, hashtagRecord.id);
+        return await unfollowHashtag(req, res, prisma, userId, hashtagRecord.id as string);
       
       case 'GET':
         // Check follow status
-        return await getFollowStatus(req, res, prisma, userId, hashtagRecord.id);
+        return await getFollowStatus(req, res, prisma, userId, hashtagRecord.id as string);
       
       default:
         res.setHeader('Allow', ['GET', 'POST', 'DELETE']);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { api } from '../lib/axios';
 interface HashtagReportButtonProps {
   hashtagId: string;
   hashtagName: string;
@@ -41,20 +42,14 @@ const HashtagReportButton: React.FC<HashtagReportButtonProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/hashtags/moderation?action=report', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          hashtagId,
-          reason: selectedReason,
-          description: description.trim() || undefined,
-        }),
+      const response = await api.post('/api/hashtags/moderation?action=report', {
+        hashtagId,
+        reason: selectedReason,
+        description: description.trim() || undefined,
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           setSuccess(true);
           setTimeout(() => {
@@ -69,7 +64,7 @@ const HashtagReportButton: React.FC<HashtagReportButtonProps> = ({
       } else {
         setError('Failed to submit report');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting report:', error);
       setError('An error occurred while submitting the report');
     } finally {

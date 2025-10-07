@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import LoadingPlaceholder from './LoadingPlaceholder';
 
+import { api } from '../lib/axios';
 interface SearchResult {
   id: string;
   title: string;
@@ -109,10 +110,10 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
         ...filters
       });
 
-      const response = await fetch(`/api/search?${params}`);
+      const response = await api.get(`/api/search?${params}`);
       
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data as any;
         
         if (data.success) {
           if (reset) {
@@ -124,7 +125,7 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
           setSuggestions(data.data.suggestions || []);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Search error:', error);
     } finally {
       setLoading(false);
@@ -163,16 +164,16 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
   // Fetch search suggestions and top videos
   const fetchSuggestions = async (query: string) => {
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=1&limit=5`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get(`/api/search?q=${encodeURIComponent(query)}&page=1&limit=5`);
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           setSuggestions(data.data.suggestions || []);
           // Set top 5 most relevant videos for suggestions
           setResults(data.data.videos || []);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching suggestions:', error);
     }
   };
@@ -195,16 +196,16 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
   // Fetch only suggestions (no video results)
   const fetchSuggestionsOnly = async (query: string) => {
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=1&limit=5`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get(`/api/search?q=${encodeURIComponent(query)}&page=1&limit=5`);
+      if (response.status === 200) {
+        const data = response.data as any;
         if (data.success) {
           setSuggestions(data.data.suggestions || []);
           // Don't set video results - only show suggestions
           setResults([]);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching suggestions:', error);
     }
   };
