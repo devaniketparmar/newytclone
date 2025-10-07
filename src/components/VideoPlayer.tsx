@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import VideoMenu from './VideoMenu';
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -15,6 +16,7 @@ interface VideoPlayerProps {
   }>;
   onNextVideo?: () => void;
   onPreviousVideo?: () => void;
+  videoId?: string; // Add videoId for the three dots menu
 }
 
 export default function VideoPlayer({ 
@@ -26,7 +28,8 @@ export default function VideoPlayer({
   playlistIndex,
   playlistVideos,
   onNextVideo,
-  onPreviousVideo
+  onPreviousVideo,
+  videoId
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -346,6 +349,18 @@ export default function VideoPlayer({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011 1v18a1 1 0 01-1 1H6a1 1 0 01-1-1V2a1 1 0 011-1h8z" />
                   </svg>
                 </button>
+                
+                {/* YouTube-style Three Dots Menu */}
+                {videoId && (
+                  <div className="relative">
+                    <VideoMenu 
+                      videoId={videoId}
+                      videoTitle={title}
+                      videoUrl={videoUrl}
+                      size="sm"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -353,40 +368,40 @@ export default function VideoPlayer({
 
         {/* Bottom Controls */}
         {showControls && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3">
             {/* Progress Bar */}
-            <div className="mb-4">
-              <div className="relative">
+            <div className="mb-3">
+              <div className="relative group">
                 <input
                   type="range"
                   min="0"
                   max={duration || 0}
                   value={currentTime}
                   onChange={handleSeek}
-                  className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer progress-slider"
+                  className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer progress-slider hover:h-2 transition-all duration-200"
                   style={{
-                    background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${(currentTime / duration) * 100}%, rgba(255,255,255,0.3) ${(currentTime / duration) * 100}%, rgba(255,255,255,0.3) 100%)`
+                    background: `linear-gradient(to right, #ff0000 0%, #ff0000 ${(currentTime / duration) * 100}%, rgba(255,255,255,0.3) ${(currentTime / duration) * 100}%, rgba(255,255,255,0.3) 100%)`
                   }}
                 />
-                <div className="absolute top-1/2 transform -translate-y-1/2 left-0 w-full h-1 bg-white/20 rounded-lg pointer-events-none"></div>
+                <div className="absolute top-1/2 transform -translate-y-1/2 left-0 w-full h-1 bg-white/20 rounded-lg pointer-events-none group-hover:h-2 transition-all duration-200"></div>
               </div>
             </div>
 
             {/* Control Buttons */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 {/* Play/Pause */}
                 <button
                   onClick={togglePlay}
-                  className="text-white hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-white/10"
+                  className="text-white hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-white/10"
                   title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
                 >
                   {isPlaying ? (
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
                     </svg>
                   ) : (
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z"/>
                     </svg>
                   )}
@@ -395,7 +410,7 @@ export default function VideoPlayer({
                 {/* Skip Backward */}
                 <button
                   onClick={() => seek(-10)}
-                  className="text-white hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-white/10"
+                  className="text-white hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-white/10"
                   title="Skip backward 10s (←)"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,7 +421,7 @@ export default function VideoPlayer({
                 {/* Skip Forward */}
                 <button
                   onClick={() => seek(10)}
-                  className="text-white hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-white/10"
+                  className="text-white hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-white/10"
                   title="Skip forward 10s (→)"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,10 +457,10 @@ export default function VideoPlayer({
                 )}
 
                 {/* Volume */}
-                <div className="flex items-center space-x-2 relative">
+                <div className="flex items-center space-x-2 relative group">
                   <button
                     onClick={toggleMute}
-                    className="text-white hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-white/10"
+                    className="text-white hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-white/10"
                     title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
                     onMouseEnter={() => setShowVolumeSlider(true)}
                     onMouseLeave={() => setShowVolumeSlider(false)}
@@ -465,22 +480,21 @@ export default function VideoPlayer({
                     )}
                   </button>
                   
-                  {showVolumeSlider && (
-                    <div className="absolute bottom-12 left-0 bg-black/90 rounded-lg p-3">
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        value={isMuted ? 0 : volume}
-                        onChange={handleVolumeChange}
-                        className="w-24 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer volume-slider"
-                        style={{
-                          background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) 100%)`
-                        }}
-                      />
-                    </div>
-                  )}
+                  {/* Volume Slider - Always visible on hover */}
+                  <div className={`absolute bottom-12 left-0 bg-black/90 rounded-lg p-3 transition-opacity duration-200 ${showVolumeSlider ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={isMuted ? 0 : volume}
+                      onChange={handleVolumeChange}
+                      className="w-24 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer volume-slider"
+                      style={{
+                        background: `linear-gradient(to right, #ff0000 0%, #ff0000 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) 100%)`
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Time Display */}
@@ -489,23 +503,23 @@ export default function VideoPlayer({
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 {/* Quality */}
                 <div className="relative">
                   <button
                     onClick={() => setShowQualityMenu(!showQualityMenu)}
-                    className="text-white hover:text-gray-300 transition-colors text-sm font-medium px-3 py-1 rounded hover:bg-white/10"
+                    className="text-white hover:text-gray-300 transition-colors text-sm font-medium px-2 py-1 rounded hover:bg-white/10"
                     title="Quality"
                   >
                     {currentQuality}
                   </button>
                   {showQualityMenu && (
-                    <div className="absolute bottom-8 right-0 bg-black/90 rounded-lg p-2 min-w-32">
+                    <div className="absolute bottom-8 right-0 bg-black/95 rounded-lg p-2 min-w-32 shadow-xl border border-white/10">
                       {qualityOptions.map((quality) => (
                         <button
                           key={quality}
                           onClick={() => changeQuality(quality)}
-                          className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-white/20 ${
+                          className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-white/20 transition-colors ${
                             currentQuality === quality ? 'text-red-500 font-medium' : 'text-white'
                           }`}
                         >
@@ -520,18 +534,18 @@ export default function VideoPlayer({
                 <div className="relative">
                   <button
                     onClick={() => setShowSettings(!showSettings)}
-                    className="text-white hover:text-gray-300 transition-colors text-sm font-medium px-3 py-1 rounded hover:bg-white/10"
+                    className="text-white hover:text-gray-300 transition-colors text-sm font-medium px-2 py-1 rounded hover:bg-white/10"
                     title="Playback speed"
                   >
                     {playbackRate}x
                   </button>
                   {showSettings && (
-                    <div className="absolute bottom-8 right-0 bg-black/90 rounded-lg p-2 min-w-32">
+                    <div className="absolute bottom-8 right-0 bg-black/95 rounded-lg p-2 min-w-32 shadow-xl border border-white/10">
                       {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((rate) => (
                         <button
                           key={rate}
                           onClick={() => changePlaybackRate(rate)}
-                          className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-white/20 ${
+                          className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-white/20 transition-colors ${
                             playbackRate === rate ? 'text-red-500 font-medium' : 'text-white'
                           }`}
                         >
@@ -545,7 +559,7 @@ export default function VideoPlayer({
                 {/* Fullscreen */}
                 <button
                   onClick={toggleFullscreen}
-                  className="text-white hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-white/10"
+                  className="text-white hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-white/10"
                   title="Fullscreen (F)"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -561,56 +575,62 @@ export default function VideoPlayer({
       <style jsx>{`
         .progress-slider::-webkit-slider-thumb {
           appearance: none;
-          width: 14px;
-          height: 14px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
-          background: #ef4444;
+          background: #ff0000;
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
           opacity: 0;
-          transition: opacity 0.2s ease;
+          transition: all 0.2s ease;
+          transform: scale(0.8);
         }
         
         .progress-slider:hover::-webkit-slider-thumb {
           opacity: 1;
+          transform: scale(1);
         }
         
         .progress-slider::-moz-range-thumb {
-          width: 14px;
-          height: 14px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
-          background: #ef4444;
+          background: #ff0000;
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
           opacity: 0;
-          transition: opacity 0.2s ease;
+          transition: all 0.2s ease;
+          transform: scale(0.8);
         }
         
         .progress-slider:hover::-moz-range-thumb {
           opacity: 1;
+          transform: scale(1);
         }
 
         .volume-slider::-webkit-slider-thumb {
           appearance: none;
-          width: 12px;
-          height: 12px;
+          width: 14px;
+          height: 14px;
           border-radius: 50%;
-          background: #ef4444;
+          background: #ff0000;
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          transition: all 0.2s ease;
         }
         
         .volume-slider::-moz-range-thumb {
-          width: 12px;
-          height: 12px;
+          width: 14px;
+          height: 14px;
           border-radius: 50%;
-          background: #ef4444;
+          background: #ff0000;
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          transition: all 0.2s ease;
         }
 
         .theater-mode {
@@ -621,6 +641,21 @@ export default function VideoPlayer({
           bottom: 0;
           z-index: 1000;
           border-radius: 0;
+        }
+
+        /* YouTube-style hover effects */
+        .progress-slider:hover {
+          height: 4px !important;
+        }
+
+        .progress-slider:hover::-webkit-slider-thumb {
+          width: 18px;
+          height: 18px;
+        }
+
+        .progress-slider:hover::-moz-range-thumb {
+          width: 18px;
+          height: 18px;
         }
       `}</style>
     </div>

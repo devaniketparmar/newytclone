@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import UniversalLayout from '@/components/UniversalLayout';
 import SearchHeader from '@/components/SearchHeader';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
+import VideoMenu from '@/components/VideoMenu';
 
 interface Video {
   id: string;
@@ -241,7 +242,7 @@ export default function SearchPage({ videos, user, query, filters }: SearchPageP
                 >
                   {/* Thumbnail */}
                   <div className="flex-shrink-0">
-                    <div className="relative w-80 h-48 bg-neutral-200 rounded-lg overflow-hidden">
+                    <div className="relative w-80 h-48 bg-neutral-200 rounded-lg overflow-hidden group">
                       {video.thumbnailUrl ? (
                         <img
                           src={video.thumbnailUrl.startsWith('/uploads/') ? `/api/uploads/${video.thumbnailUrl.replace('/uploads/', '')}` : video.thumbnailUrl}
@@ -268,9 +269,23 @@ export default function SearchPage({ videos, user, query, filters }: SearchPageP
 
                   {/* Video Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-medium text-neutral-900 mb-2 line-clamp-2 hover:text-red-600 transition-colors">
-                      {video.title}
-                    </h3>
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-medium text-neutral-900 line-clamp-2 hover:text-red-600 transition-colors flex-1 mr-2">
+                        {video.title}
+                      </h3>
+                      
+                      {/* Three Dots Menu */}
+                      {user && (
+                        <div className="flex-shrink-0">
+                          <VideoMenu 
+                            videoId={video.id}
+                            videoTitle={video.title}
+                            videoUrl={video.videoUrl}
+                            size="sm"
+                          />
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="flex items-center space-x-2 text-sm text-neutral-600 mb-3">
                       <span>{formatViewCount(video.viewCount)} views</span>

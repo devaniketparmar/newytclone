@@ -72,27 +72,36 @@ export default function HistoryPage({ history: initialHistory = [], user }: Hist
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {history.map((video) => (
               <div key={video.id} className="bg-white rounded-lg border border-neutral-200 shadow-sm overflow-hidden">
-                <div className="relative">
-                  <a href={`/video/${video.id}`} className="block">
-                    <div className="w-full h-40 bg-neutral-200 overflow-hidden">
-                      {video.thumbnailUrl ? (
-                        <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-400 to-red-600 text-white">
-                          <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                      )}
-                    </div>
-                  </a>
-
-                  <button onClick={() => removeItem(video.id)} className="absolute top-2 right-2 bg-white/90 text-sm px-2 py-1 rounded-md hover:bg-white">
-                    Remove
-                  </button>
-                </div>
-
-                <div className="p-3">
-                  <a href={`/video/${video.id}`} className="text-sm font-semibold text-gray-900 line-clamp-2">{video.title}</a>
-                  <div className="text-xs text-gray-600 mt-1">{video.channel?.name}</div>
+                <VideoCard 
+                  video={{
+                    ...video,
+                    description: '',
+                    videoUrl: '',
+                    likeCount: 0,
+                    commentCount: 0,
+                    createdAt: '',
+                    status: 'READY' as const,
+                    channel: {
+                      id: video.channel?.id || '',
+                      name: video.channel?.name || '',
+                      avatarUrl: '',
+                      subscriberCount: 0,
+                      userId: ''
+                    }
+                  }}
+                  user={user}
+                  layout="grid"
+                />
+                <div className="p-3 border-t border-neutral-100">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-500">Watched recently</p>
+                    <button 
+                      onClick={() => removeItem(video.id)} 
+                      className="text-xs text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

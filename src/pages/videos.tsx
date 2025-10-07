@@ -5,6 +5,7 @@ import SearchHeader from '@/components/SearchHeader';
 import UniversalLayout from '@/components/UniversalLayout';
 import CategoryBar from '@/components/CategoryBar';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
+import VideoCard from '@/components/VideoCard';
 
 interface Video {
   id: string;
@@ -41,60 +42,113 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [filteredVideos, setFilteredVideos] = useState(videos || []);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreVideos, setHasMoreVideos] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Ensure user is defined
   const currentUser = user || null;
 
   const handleCategorySelect = async (categoryId: string) => {
     setSelectedCategory(categoryId);
-    setLoading(true);
+    setCurrentPage(1); // Reset to first page when changing category
+    setFilteredVideos([]); // Clear existing videos
+    await fetchVideos(categoryId, searchQuery, 1, true); // Reset = true
+  };
+
+  const fetchVideos = async (category: string = selectedCategory, search: string = searchQuery, page: number = currentPage, reset: boolean = false) => {
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
 
     try {
-      // Make API call with category filter
+      // Make API call with pagination
       const params = new URLSearchParams();
-      if (categoryId !== 'all') {
-        params.append('category', categoryId);
+      params.append('page', page.toString());
+      params.append('limit', '10'); // 10 videos per page
+      
+      if (category !== 'all') {
+        params.append('category', category);
       }
-      if (searchQuery) {
-        params.append('search', searchQuery);
+      if (search) {
+        params.append('search', search);
       }
 
       const response = await fetch(`/api/videos?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        setFilteredVideos(data.data || []);
+        const newVideos = data.data || [];
+        
+        if (reset) {
+          setFilteredVideos(newVideos);
+        } else {
+          setFilteredVideos(prev => [...prev, ...newVideos]);
+        }
+        
+        // Check if there are more videos
+        setHasMoreVideos(newVideos.length === 10);
       } else {
         // Fallback to client-side filtering if API fails
         const clientFiltered = (videos || []).filter(video => {
-          const matchesSearch = searchQuery === '' ||
-            video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            video.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            video.channel.name.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchesSearch = search === '' ||
+            video.title.toLowerCase().includes(search.toLowerCase()) ||
+            video.description.toLowerCase().includes(search.toLowerCase()) ||
+            video.channel.name.toLowerCase().includes(search.toLowerCase());
 
           const videoCategory = getVideoCategory(video);
-          const matchesCategory = categoryId === 'all' || videoCategory === categoryId;
+          const matchesCategory = category === 'all' || videoCategory === category;
 
           return matchesSearch && matchesCategory;
         });
-        setFilteredVideos(clientFiltered);
+        
+        // Client-side pagination
+        const startIndex = (page - 1) * 10;
+        const endIndex = startIndex + 10;
+        const paginatedVideos = clientFiltered.slice(startIndex, endIndex);
+        
+        if (reset) {
+          setFilteredVideos(paginatedVideos);
+        } else {
+          setFilteredVideos(prev => [...prev, ...paginatedVideos]);
+        }
+        
+        setHasMoreVideos(endIndex < clientFiltered.length);
       }
     } catch (error) {
-      console.error('Error fetching videos by category:', error);
+      console.error('Error fetching videos:', error);
       // Fallback to client-side filtering
       const clientFiltered = (videos || []).filter(video => {
-        const matchesSearch = searchQuery === '' ||
-          video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          video.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          video.channel.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = search === '' ||
+          video.title.toLowerCase().includes(search.toLowerCase()) ||
+          video.description.toLowerCase().includes(search.toLowerCase()) ||
+          video.channel.name.toLowerCase().includes(search.toLowerCase());
 
         const videoCategory = getVideoCategory(video);
-        const matchesCategory = categoryId === 'all' || videoCategory === categoryId;
+        const matchesCategory = category === 'all' || videoCategory === category;
 
         return matchesSearch && matchesCategory;
       });
-      setFilteredVideos(clientFiltered);
+      
+      // Client-side pagination
+      const startIndex = (page - 1) * 10;
+      const endIndex = startIndex + 10;
+      const paginatedVideos = clientFiltered.slice(startIndex, endIndex);
+      
+      if (reset) {
+        setFilteredVideos(paginatedVideos);
+      } else {
+        setFilteredVideos(prev => [...prev, ...paginatedVideos]);
+      }
+      
+      setHasMoreVideos(endIndex < clientFiltered.length);
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
   };
 
@@ -151,56 +205,21 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    setLoading(true);
-
-    try {
-      // Make API call with search and category filters
-      const params = new URLSearchParams();
-      if (query) {
-        params.append('search', query);
-      }
-      if (selectedCategory !== 'all') {
-        params.append('category', selectedCategory);
-      }
-
-      const response = await fetch(`/api/videos?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setFilteredVideos(data.data || []);
-      } else {
-        // Fallback to client-side filtering
-        const clientFiltered = (videos || []).filter(video => {
-          const matchesSearch = query === '' ||
-            video.title.toLowerCase().includes(query.toLowerCase()) ||
-            video.description.toLowerCase().includes(query.toLowerCase()) ||
-            video.channel.name.toLowerCase().includes(query.toLowerCase());
-
-          const videoCategory = getVideoCategory(video);
-          const matchesCategory = selectedCategory === 'all' || videoCategory === selectedCategory;
-
-          return matchesSearch && matchesCategory;
-        });
-        setFilteredVideos(clientFiltered);
-      }
-    } catch (error) {
-      console.error('Error searching videos:', error);
-      // Fallback to client-side filtering
-      const clientFiltered = (videos || []).filter(video => {
-        const matchesSearch = query === '' ||
-          video.title.toLowerCase().includes(query.toLowerCase()) ||
-          video.description.toLowerCase().includes(query.toLowerCase()) ||
-          video.channel.name.toLowerCase().includes(query.toLowerCase());
-
-        const videoCategory = getVideoCategory(video);
-        const matchesCategory = selectedCategory === 'all' || videoCategory === selectedCategory;
-
-        return matchesSearch && matchesCategory;
-      });
-      setFilteredVideos(clientFiltered);
-    } finally {
-      setLoading(false);
-    }
+    setCurrentPage(1); // Reset to first page when searching
+    setFilteredVideos([]); // Clear existing videos
+    await fetchVideos(selectedCategory, query, 1, true); // Reset = true
   };
+
+  const loadMore = async () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    await fetchVideos(selectedCategory, searchQuery, nextPage, false); // Reset = false
+  };
+
+  // Load videos on component mount
+  React.useEffect(() => {
+    fetchVideos(selectedCategory, searchQuery, 1, true); // Reset = true
+  }, []);
 
   return (
     <UniversalLayout 
@@ -224,10 +243,10 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
       <div className="p-6">
         {loading && (
           <div className={viewMode === 'grid' 
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6' 
             : 'space-y-4'
           }>
-            {Array.from({ length: 8 }).map((_, index) => (
+            {Array.from({ length: 10 }).map((_, index) => (
               <LoadingPlaceholder key={index} type="video-card" />
             ))}
           </div>
@@ -261,74 +280,60 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
         )}
         
         {!loading && filteredVideos.length > 0 && (
-          <div className={viewMode === 'grid' 
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6' 
-            : 'space-y-4'
-          }>
-            {filteredVideos.map((video) => (
-              <div 
-                key={video.id} 
-                className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden border border-neutral-100"
-                onClick={() => router.push(`/video/${video.id}`)}
-              >
-                <div className="relative aspect-video bg-neutral-200 overflow-hidden">
-                  {video.thumbnailUrl ? (
-                    <img
-                      src={video.thumbnailUrl.startsWith('/uploads/') ? `/api/uploads/${video.thumbnailUrl.replace('/uploads/', '')}` : video.thumbnailUrl}
-                      alt={video.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                    />
+          <>
+            <div className={viewMode === 'grid' 
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6' 
+              : 'space-y-4'
+            }>
+              {filteredVideos.map((video) => (
+                <VideoCard
+                  key={video.id}
+                  video={video}
+                  user={currentUser}
+                  layout={viewMode}
+                />
+              ))}
+            </div>
+            
+            {/* Load More Button */}
+            {hasMoreVideos && !loading && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                >
+                  {loadingMore ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      <span>Loading...</span>
+                    </>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500 to-secondary-500">
-                      <div className="text-center text-white">
-                        <svg className="w-12 h-12 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
-                        <p className="text-sm font-medium">Processing...</p>
-                      </div>
-                    </div>
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      <span>Load More Videos</span>
+                    </>
                   )}
-                  
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
-                    {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                  </div>
-                  
-                  {video.status === 'PROCESSING' && (
-                    <div className="absolute top-2 left-2 bg-warning-500 text-white text-xs px-2 py-1 rounded">
-                      Processing
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4">
-                  <h3 className="text-sm font-semibold text-neutral-900 mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors leading-tight">
-                    {video.title}
-                  </h3>
-                  
-                  <div className="flex items-start space-x-3">
-                    <div className="w-9 h-9 bg-neutral-200 rounded-full flex-shrink-0 overflow-hidden">
-                      <img
-                        src={video.channel.avatarUrl || '/api/placeholder/36/36'}
-                        alt={video.channel.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-900 truncate">
-                        {video.channel.name}
-                      </p>
-                      <div className="flex items-center space-x-2 text-xs text-neutral-500 mt-1">
-                        <span>{formatViewCount(video.viewCount)} views</span>
-                        <span>•</span>
-                        <span>{formatTimeAgo(video.publishedAt)}</span>
-                      </div>
-                    </div>
-                  </div>
+                </button>
+              </div>
+            )}
+            
+            {/* Loading More Indicator */}
+            {loadingMore && (
+              <div className="flex justify-center mt-4">
+                <div className="flex items-center space-x-2 text-gray-600">
+                  <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Loading more videos...</span>
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </UniversalLayout>

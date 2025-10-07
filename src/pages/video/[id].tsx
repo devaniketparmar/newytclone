@@ -334,6 +334,7 @@ export default function VideoPage({ video, relatedVideos, user }: VideoPageProps
                 playlistVideos={playlistVideos}
                 onNextVideo={handleNextVideo}
                 onPreviousVideo={handlePreviousVideo}
+                videoId={video.id}
               />
             </div>
 

@@ -82,7 +82,7 @@ export default function VideoCard({
   if (layout === 'list') {
     return (
       <div 
-        className="flex bg-white rounded-lg duration-300 cursor-pointer"
+        className="flex bg-white rounded-lg duration-300 cursor-pointer relative"
         onClick={handleCardClick}
       >
         {/* Thumbnail */}
@@ -229,7 +229,7 @@ export default function VideoCard({
   // Grid layout (default)
   return (
     <div 
-      className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-neutral-100 hover:border-neutral-200"
+      className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-neutral-100 hover:border-neutral-200 relative"
       onClick={handleCardClick}
     >
       {/* Thumbnail */}
@@ -279,16 +279,6 @@ export default function VideoCard({
 
         {/* Action buttons */}
         <div className="absolute top-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          {/* Video Menu for all users */}
-          {user && (
-            <VideoMenu 
-              videoId={video.id}
-              videoTitle={video.title}
-              videoUrl={video.videoUrl}
-              size="md"
-            />
-          )}
-          
           {/* Edit/Delete buttons for video owner */}
           {user && video.channel.userId === user.id && onEdit && onDelete && (
             <>
@@ -323,10 +313,24 @@ export default function VideoCard({
       </div>
 
       {/* Video Info */}
-      <div className="p-4">
-            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-3 group-hover:text-red-600 transition-colors duration-200 leading-tight">
-          {video.title}
-        </h3>
+      <div className="p-4 relative">
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors duration-200 leading-tight flex-1 mr-2">
+            {video.title}
+          </h3>
+          
+          {/* Video Menu - positioned in video info section */}
+          {user && (
+            <div className="flex-shrink-0">
+              <VideoMenu 
+                videoId={video.id}
+                videoTitle={video.title}
+                videoUrl={video.videoUrl}
+                size="sm"
+              />
+            </div>
+          )}
+        </div>
         
         <div className="flex items-start space-x-3">
           <div className="w-9 h-9 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md flex-shrink-0">

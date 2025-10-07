@@ -54,17 +54,24 @@ export default function SubscriptionsPage({ user }: SubscriptionsPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'channels' | 'videos'>('videos');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreVideos, setHasMoreVideos] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    fetchSubscriptions();
+    fetchSubscriptions(1, true); // Reset = true
   }, []);
 
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = async (page: number = currentPage, reset: boolean = false) => {
     try {
-      setLoading(true);
+      if (reset) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
       setError(null);
 
-      const response = await fetch('/api/subscriptions', {
+      const response = await fetch(`/api/subscriptions?page=${page}&limit=10`, {
         credentials: 'include', // Include cookies for authentication
         headers: {
           'Content-Type': 'application/json',
@@ -80,13 +87,35 @@ export default function SubscriptionsPage({ user }: SubscriptionsPageProps) {
       }
 
       const data = await response.json();
-      setSubscriptionData(data.data);
+      const newVideos = data.data.videos || [];
+      
+      if (reset) {
+        setSubscriptionData(data.data);
+      } else {
+        setSubscriptionData(prev => ({
+          ...prev!,
+          videos: [...prev!.videos, ...newVideos]
+        }));
+      }
+      
+      // Check if there are more videos
+      setHasMoreVideos(newVideos.length === 10);
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
+  };
+
+  const loadMore = async () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    await fetchSubscriptions(nextPage, false); // Reset = false
   };
 
   const handleUnsubscribe = async (channelId: string) => {
@@ -236,39 +265,57 @@ export default function SubscriptionsPage({ user }: SubscriptionsPageProps) {
           {activeTab === 'videos' ? (
             <div>
               {subscriptionData?.videos && subscriptionData.videos.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {subscriptionData.videos.map((video) => (
-                    <div key={video.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                      <div className="relative">
-                        <img
-                          src={video.thumbnailUrl || '/placeholder-thumbnail.jpg'}
-                          alt={video.title}
-                          className="w-full h-48 object-cover"
-                        />
-                        <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-1 py-0.5 rounded">
-                          {formatDuration(video.duration)}
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-medium text-gray-900 line-clamp-2 mb-2">
-                          {video.title}
-                        </h3>
-                        <div className="flex items-center space-x-2 mb-2">
-                          <img
-                            src={video.channel.avatarUrl || '/placeholder-avatar.jpg'}
-                            alt={video.channel.name}
-                            className="w-6 h-6 rounded-full"
-                          />
-                          <span className="text-sm text-gray-600">{video.channel.name}</span>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          <div>{formatViewCount(Number(video.viewCount))}</div>
-                          <div>{formatTimeAgo(video.publishedAt || video.createdAt)}</div>
-                        </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {subscriptionData.videos.map((video) => (
+                      <VideoCard
+                        key={video.id}
+                        video={video}
+                        user={user}
+                        layout="grid"
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Load More Button */}
+                  {hasMoreVideos && !loading && (
+                    <div className="flex justify-center mt-8">
+                      <button
+                        onClick={loadMore}
+                        disabled={loadingMore}
+                        className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      >
+                        {loadingMore ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span>Loading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            <span>Load More Videos</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Loading More Indicator */}
+                  {loadingMore && (
+                    <div className="flex justify-center mt-4">
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Loading more videos...</span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-12">
                   <div className="text-gray-400 mb-4">

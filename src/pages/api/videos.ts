@@ -34,7 +34,7 @@ async function handleGetVideos(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Get query parameters
-    const { page = '1', limit = '20', category, search } = req.query;
+    const { page = '1', limit = '10', category, search } = req.query;
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;

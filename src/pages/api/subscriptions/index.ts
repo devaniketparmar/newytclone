@@ -55,6 +55,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
+    // Get query parameters for pagination
+    const { page = '1', limit = '10' } = req.query;
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const offset = (pageNum - 1) * limitNum;
+
     // Get latest videos from subscribed channels
     const subscribedChannelIds = subscriptions.map(sub => sub.channel.id);
     
@@ -78,7 +84,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       orderBy: {
         publishedAt: 'desc'
       },
-      take: 50 // Limit to 50 most recent videos
+      skip: offset,
+      take: limitNum
+    });
+
+    // Get total count for pagination
+    const totalVideos = await prisma.video.count({
+      where: {
+        channelId: {
+          in: subscribedChannelIds
+        },
+        status: 'READY',
+        privacy: 'PUBLIC'
+      }
     });
 
     // Format the response
@@ -100,6 +118,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         channels,
         videos,
         totalSubscriptions: subscriptions.length
+      },
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalVideos,
+        totalPages: Math.ceil(totalVideos / limitNum),
+        hasNext: pageNum * limitNum < totalVideos,
+        hasPrev: pageNum > 1
       }
     });
 

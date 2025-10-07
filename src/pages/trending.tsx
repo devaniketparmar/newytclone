@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import UniversalLayout from '@/components/UniversalLayout';
 import SearchHeader from '@/components/SearchHeader';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
+import VideoMenu from '@/components/VideoMenu';
 
 interface Video {
   id: string;
@@ -287,7 +288,7 @@ export default function TrendingPage({ videos: initialVideos, user, filters: ini
                   </div>
 
                   {/* Thumbnail */}
-                  <div className="relative w-80 h-48 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="relative w-80 h-48 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 group">
                     {video.thumbnailUrl ? (
                       <img
                         src={video.thumbnailUrl}
@@ -308,9 +309,23 @@ export default function TrendingPage({ videos: initialVideos, user, filters: ini
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mb-2">
-                      {video.title}
-                    </h3>
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1 mr-2">
+                        {video.title}
+                      </h3>
+                      
+                      {/* Three Dots Menu */}
+                      {user && (
+                        <div className="flex-shrink-0">
+                          <VideoMenu 
+                            videoId={video.id}
+                            videoTitle={video.title}
+                            videoUrl={video.videoUrl}
+                            size="sm"
+                          />
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="flex items-center space-x-4 mb-3">
                       <div className="flex items-center space-x-2">

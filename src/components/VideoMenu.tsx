@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface Playlist {
   id: string;
@@ -28,6 +28,7 @@ export default function VideoMenu({
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isInWatchLater, setIsInWatchLater] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const sizeClasses = {
     sm: 'w-6 h-6',
@@ -46,6 +47,23 @@ export default function VideoMenu({
       fetchPlaylists();
       checkWatchLaterStatus();
     }
+  }, [showMenu]);
+
+  // Handle clicks outside the menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [showMenu]);
 
   const fetchPlaylists = async () => {
@@ -184,9 +202,12 @@ export default function VideoMenu({
 
   return (
     <>
-      <div className="relative">
+      <div ref={menuRef} className="relative">
         <button
-          onClick={() => setShowMenu(!showMenu)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMenu(!showMenu);
+          }}
           className={`
             ${sizeClasses[size]}
             flex items-center justify-center
@@ -208,11 +229,14 @@ export default function VideoMenu({
 
         {/* Dropdown Menu */}
         {showMenu && (
-          <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+          <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999]">
             <div className="py-2">
               {/* Watch Later */}
               <button
-                onClick={handleAddToWatchLater}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddToWatchLater();
+                }}
                 disabled={loading}
                 className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
               >
@@ -226,7 +250,10 @@ export default function VideoMenu({
 
               {/* Add to Playlist */}
               <button
-                onClick={() => setShowPlaylistModal(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPlaylistModal(true);
+                }}
                 className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -239,7 +266,10 @@ export default function VideoMenu({
 
               {/* Share */}
               <button
-                onClick={handleShare}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleShare();
+                }}
                 className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,7 +280,10 @@ export default function VideoMenu({
 
               {/* Download */}
               <button
-                onClick={handleDownload}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload();
+                }}
                 className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,7 +296,10 @@ export default function VideoMenu({
 
               {/* Create Playlist */}
               <button
-                onClick={handleCreatePlaylist}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCreatePlaylist();
+                }}
                 className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -278,13 +314,16 @@ export default function VideoMenu({
 
       {/* Playlist Selection Modal */}
       {showPlaylistModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Add to Playlist</h3>
                 <button
-                  onClick={() => setShowPlaylistModal(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPlaylistModal(false);
+                  }}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,6 +342,7 @@ export default function VideoMenu({
                 {playlists.map((playlist) => (
                   <label
                     key={playlist.id}
+                    onClick={(e) => e.stopPropagation()}
                     className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
                   >
                     <input
@@ -331,7 +371,10 @@ export default function VideoMenu({
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">No playlists yet</h4>
                   <p className="text-gray-600 mb-4">Create a playlist first to add videos.</p>
                   <button
-                    onClick={handleCreatePlaylist}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCreatePlaylist();
+                    }}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     Create Playlist
@@ -341,13 +384,19 @@ export default function VideoMenu({
 
               <div className="flex items-center justify-end space-x-3">
                 <button
-                  onClick={() => setShowPlaylistModal(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPlaylistModal(false);
+                  }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleAddToPlaylist}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToPlaylist();
+                  }}
                   disabled={loading || !selectedPlaylistId}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
@@ -364,14 +413,6 @@ export default function VideoMenu({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Click outside to close */}
-      {showMenu && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setShowMenu(false)}
-        />
       )}
     </>
   );
