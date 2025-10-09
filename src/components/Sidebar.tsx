@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import YourChannelMenu from './YourChannelMenu';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -150,16 +151,6 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
   ];
 
   const userItems: NavigationItem[] = [
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-      label: 'Your Channel',
-      path: `/channel/${user?.id}`,
-      active: router.pathname === `/channel/${user?.id}`
-    },
     {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -608,71 +599,77 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             )}
 
             {/* User Section */}
-            {userItems && (
-              <div className={isCollapsed ? 'p-3' : 'p-4'}>
-                {!isCollapsed && (
-                  <div className="px-4 py-2 mb-2">
-                    <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      You
-                    </h3>
-                  </div>
-                )}
-                <div className={isCollapsed ? 'space-y-3' : 'space-y-1'}>
-                  {userItems.map((item, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleNavigation(item.path)}
-                      className={`
-                        w-full flex items-center ${isCollapsed ? 'justify-center px-4 py-4' : 'space-x-4 px-4 py-3'} rounded-2xl text-left transition-all duration-300 group relative overflow-hidden
-                        ${item.active 
-                          ? isCollapsed 
-                            ? 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 font-semibold shadow-lg shadow-blue-100/50 border border-blue-200/50' 
-                            : 'bg-red-50 text-red-700 font-semibold shadow-sm'
-                          : isCollapsed
-                            ? 'text-neutral-600 hover:bg-gradient-to-br hover:from-neutral-50 hover:to-neutral-100 hover:text-neutral-800 hover:shadow-md hover:shadow-neutral-100/50 hover:border hover:border-neutral-200/50'
-                            : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
-                        }
-                        ${isCollapsed ? 'hover:scale-110 hover:-translate-y-0.5' : ''}
-                      `}
-                      title={item.label}
-                    >
-                      {/* Background glow effect for active items */}
-                      {item.active && isCollapsed && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-blue-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      )}
-                      
-                      <span className={`
-                        transition-all duration-300 flex-shrink-0 relative z-10 ${isCollapsed ? 'w-7 h-7' : ''}
-                        ${item.active 
-                          ? 'text-blue-600 drop-shadow-sm' 
-                          : 'text-neutral-500 group-hover:text-neutral-700 group-hover:drop-shadow-sm'
-                        }
-                        ${isCollapsed ? 'group-hover:scale-110' : ''}
-                      `}>
-                        {item.icon}
-                      </span>
-                      
-                      <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed ? 'hidden' : ''}`}>{item.label}</span>
-                      
-                      {/* Active indicator for expanded state */}
-                      {item.active && !isCollapsed && (
-                        <div className="ml-auto w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-sm relative z-10"></div>
-                      )}
-                      
-                      {/* Enhanced active indicator for collapsed state */}
-                      {item.active && isCollapsed && (
-                        <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full shadow-lg shadow-blue-500/30"></div>
-                      )}
-                      
-                      {/* Subtle pulse animation for active collapsed items */}
-                      {item.active && isCollapsed && (
-                        <div className="absolute inset-0 rounded-2xl bg-blue-500/5 animate-pulse"></div>
-                      )}
-                    </button>
-                  ))}
+            <div className={isCollapsed ? 'p-3' : 'p-4'}>
+              {!isCollapsed && (
+                <div className="px-4 py-2 mb-2">
+                  <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    You
+                  </h3>
                 </div>
+              )}
+              <div className={isCollapsed ? 'space-y-3' : 'space-y-1'}>
+                {/* Your Channel Menu */}
+                <YourChannelMenu 
+                  user={user}
+                  isCollapsed={isCollapsed}
+                  onNavigate={handleNavigation}
+                />
+                
+                {/* Other User Items */}
+                {userItems.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleNavigation(item.path)}
+                    className={`
+                      w-full flex items-center ${isCollapsed ? 'justify-center px-4 py-4' : 'space-x-4 px-4 py-3'} rounded-2xl text-left transition-all duration-300 group relative overflow-hidden
+                      ${item.active 
+                        ? isCollapsed 
+                          ? 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 font-semibold shadow-lg shadow-blue-100/50 border border-blue-200/50' 
+                          : 'bg-red-50 text-red-700 font-semibold shadow-sm'
+                        : isCollapsed
+                          ? 'text-neutral-600 hover:bg-gradient-to-br hover:from-neutral-50 hover:to-neutral-100 hover:text-neutral-800 hover:shadow-md hover:shadow-neutral-100/50 hover:border hover:border-neutral-200/50'
+                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                      }
+                      ${isCollapsed ? 'hover:scale-110 hover:-translate-y-0.5' : ''}
+                    `}
+                    title={item.label}
+                  >
+                    {/* Background glow effect for active items */}
+                    {item.active && isCollapsed && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-blue-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    )}
+                    
+                    <span className={`
+                      transition-all duration-300 flex-shrink-0 relative z-10 ${isCollapsed ? 'w-7 h-7' : ''}
+                      ${item.active 
+                        ? 'text-blue-600 drop-shadow-sm' 
+                        : 'text-neutral-500 group-hover:text-neutral-700 group-hover:drop-shadow-sm'
+                      }
+                      ${isCollapsed ? 'group-hover:scale-110' : ''}
+                    `}>
+                      {item.icon}
+                    </span>
+                    
+                    <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed ? 'hidden' : ''}`}>{item.label}</span>
+                    
+                    {/* Active indicator for expanded state */}
+                    {item.active && !isCollapsed && (
+                      <div className="ml-auto w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-sm relative z-10"></div>
+                    )}
+                    
+                    {/* Enhanced active indicator for collapsed state */}
+                    {item.active && isCollapsed && (
+                      <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full shadow-lg shadow-blue-500/30"></div>
+                    )}
+                    
+                    {/* Subtle pulse animation for active collapsed items */}
+                    {item.active && isCollapsed && (
+                      <div className="absolute inset-0 rounded-2xl bg-blue-500/5 animate-pulse"></div>
+                    )}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
             {/* Divider */}
             <div className={`border-t border-neutral-200 ${isCollapsed ? 'mx-2' : 'mx-4'}`} />
