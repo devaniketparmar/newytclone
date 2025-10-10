@@ -50,6 +50,7 @@ model User {
   hashtagReports   HashtagReport[]
   hashtagBlacklist HashtagBlacklist[]
   watchLater        WatchLater[]
+  shares            Share[]
 
   @@map("users")
 }
@@ -115,6 +116,7 @@ model Video {
   likeCount       Int         @default(0) @map("like_count")
   dislikeCount    Int         @default(0) @map("dislike_count")
   commentCount    Int         @default(0) @map("comment_count")
+  shareCount      Int         @default(0) @map("share_count")
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
   publishedAt     DateTime?   @map("published_at")
@@ -131,6 +133,7 @@ model Video {
   videoTags       VideoTag[]
   playlistVideos  PlaylistVideo[]
   watchLater      WatchLater[]
+  shares          Share[]
 
   @@map("videos")
 }
@@ -540,4 +543,28 @@ model WatchLater {
 
   @@unique([userId, videoId])
   @@map("watch_later")
+}
+
+model Share {
+  id        String   @id @default(uuid())
+  videoId   String   @map("video_id")
+  userId    String?  @map("user_id")
+  type      ShareType
+  platform  String?  // 'facebook', 'twitter', 'linkedin', 'whatsapp', 'telegram', 'email', 'copy', 'embed'
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("shares")
+}
+
+enum ShareType {
+  SOCIAL_MEDIA
+  COPY_LINK
+  EMBED_CODE
+  DIRECT_MESSAGE
 }

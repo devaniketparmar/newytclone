@@ -6,6 +6,7 @@ import UniversalLayout from '@/components/UniversalLayout';
 import CategoryBar from '@/components/CategoryBar';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 import VideoCard from '@/components/VideoCard';
+import { FilterState } from '@/components/SearchFilters';
 
 interface Video {
   id: string;
@@ -210,6 +211,44 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
     await fetchVideos(selectedCategory, query, 1, true); // Reset = true
   };
 
+  const handleAdvancedSearch = async (query: string, filters: FilterState) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page when searching
+    setFilteredVideos([]); // Clear existing videos
+    
+    // Apply filters to the search
+    const params = new URLSearchParams();
+    params.append('page', '1');
+    params.append('limit', '10');
+    params.append('search', query);
+    
+    // Add filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== '') {
+        params.append(key, value);
+      }
+    });
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/videos?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setFilteredVideos(data.data || []);
+        setHasMoreVideos((data.data || []).length === 10);
+      } else {
+        // Fallback to basic search if API fails
+        await fetchVideos(selectedCategory, query, 1, true);
+      }
+    } catch (error) {
+      console.error('Error in advanced search:', error);
+      // Fallback to basic search
+      await fetchVideos(selectedCategory, query, 1, true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadMore = async () => {
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
@@ -232,6 +271,7 @@ export default function VideosPage({ videos, user }: VideosPageProps) {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           showViewToggle={true}
+          onAdvancedSearch={handleAdvancedSearch}
         />
       }
     >

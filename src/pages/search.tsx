@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import UniversalLayout from '@/components/UniversalLayout';
-import SearchHeader from '@/components/SearchHeader';
+import YouTubeSearchBar from '@/components/YouTubeSearchBar';
+import SearchFilters, { FilterState } from '@/components/SearchFilters';
 import LoadingPlaceholder from '@/components/LoadingPlaceholder';
 import VideoMenu from '@/components/VideoMenu';
 
@@ -36,12 +37,7 @@ interface SearchPageProps {
   videos: Video[];
   user?: any;
   query?: string;
-  filters?: {
-    category?: string;
-    duration?: string;
-    uploadDate?: string;
-    sort?: string;
-  };
+  filters?: FilterState;
 }
 
 export default function SearchPage({ videos, user, query, filters }: SearchPageProps) {
@@ -49,15 +45,61 @@ export default function SearchPage({ videos, user, query, filters }: SearchPageP
   const [searchQuery, setSearchQuery] = useState(query || '');
   const [searchResults, setSearchResults] = useState(videos || []);
   const [loading, setLoading] = useState(false);
-  const [currentFilters, setCurrentFilters] = useState(filters || {
-    category: 'all',
-    duration: 'all',
-    uploadDate: 'all',
-    sort: 'relevance'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [currentFilters, setCurrentFilters] = useState<FilterState>(filters || {
+    uploadDate: '',
+    duration: '',
+    quality: '',
+    viewCount: '',
+    sort: 'relevance',
+    category: ''
   });
 
   // Ensure user is defined
   const currentUser = user || null;
+
+  const performSearch = useCallback(async (query: string, filters: FilterState, page: number = 1) => {
+    setLoading(true);
+    
+    try {
+      const params = new URLSearchParams();
+      params.append('q', query);
+      params.append('page', page.toString());
+      params.append('limit', '20');
+      
+      // Add filters
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== '') {
+          params.append(key, value);
+        }
+      });
+      
+      const response = await fetch(`/api/search?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (page === 1) {
+          setSearchResults(data.data.videos || []);
+        } else {
+          setSearchResults(prev => [...prev, ...(data.data.videos || [])]);
+        }
+        setHasMore(data.data.videos && data.data.videos.length === 20);
+      }
+    } catch (error) {
+      console.error('Error searching videos:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Handle filter changes
+  const handleFiltersChange = useCallback((newFilters: FilterState) => {
+    setCurrentFilters(newFilters);
+    setCurrentPage(1);
+    setSearchResults([]);
+    performSearch(searchQuery, newFilters, 1);
+  }, [searchQuery, performSearch]);
 
   const formatViewCount = (count: number | undefined | null) => {
     if (!count || count === 0) {
@@ -86,31 +128,9 @@ export default function SearchPage({ videos, user, query, filters }: SearchPageP
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    setLoading(true);
-    
-    try {
-      const params = new URLSearchParams();
-      params.append('q', query);
-      params.append('page', '1');
-      params.append('limit', '20');
-      
-      // Add current filters
-      Object.entries(currentFilters).forEach(([key, value]) => {
-        if (value && value !== 'all') {
-          params.append(key, value);
-        }
-      });
-      
-      const response = await fetch(`/api/search?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.data.videos || []);
-      }
-    } catch (error) {
-      console.error('Error searching videos:', error);
-    } finally {
-      setLoading(false);
-    }
+    setCurrentPage(1);
+    setSearchResults([]);
+    performSearch(query, currentFilters, 1);
   };
 
   const handleFilterChange = async (filterType: string, value: string) => {
@@ -148,63 +168,61 @@ export default function SearchPage({ videos, user, query, filters }: SearchPageP
       user={currentUser}
       showHeader={true}
       headerContent={
-        <SearchHeader
-          searchQuery={searchQuery}
-          onSearchChange={handleSearch}
-          showViewToggle={false}
-        />
+        <div className="w-full max-w-4xl mx-auto">
+          <YouTubeSearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onSearchSubmit={handleSearch}
+            filters={currentFilters}
+            onFiltersChange={handleFiltersChange}
+            showFilters={true}
+            compact={false}
+          />
+        </div>
       }
     >
-      <div className="min-h-screen bg-neutral-50">
+      <div className="min-h-screen bg-gray-50">
         {/* Search Results Header */}
-        <div className="bg-white border-b border-neutral-200 px-4 py-3">
+        <div className="bg-white border-b border-gray-200 px-4 py-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <h1 className="text-lg font-medium text-neutral-900">
+                <h1 className="text-xl font-semibold text-gray-900">
                   Search results for "{searchQuery}"
                 </h1>
-                <span className="text-sm text-neutral-500">
+                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                   {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
                 </span>
               </div>
               
-              {/* Filter Buttons */}
+              {/* View Toggle */}
               <div className="flex items-center space-x-2">
-                <select
-                  value={currentFilters.sort}
-                  onChange={(e) => handleFilterChange('sort', e.target.value)}
-                  className="px-3 py-1.5 border border-neutral-300 rounded-md text-sm bg-white hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg transition-colors ${
+                    viewMode === 'grid' 
+                      ? 'bg-blue-100 text-blue-600' 
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                  title="Grid view"
                 >
-                  <option value="relevance">Sort by relevance</option>
-                  <option value="date">Sort by upload date</option>
-                  <option value="viewCount">Sort by view count</option>
-                  <option value="rating">Sort by rating</option>
-                </select>
-                
-                <select
-                  value={currentFilters.duration}
-                  onChange={(e) => handleFilterChange('duration', e.target.value)}
-                  className="px-3 py-1.5 border border-neutral-300 rounded-md text-sm bg-white hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-lg transition-colors ${
+                    viewMode === 'list' 
+                      ? 'bg-blue-100 text-blue-600' 
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                  title="List view"
                 >
-                  <option value="all">Any duration</option>
-                  <option value="1">Under 4 minutes</option>
-                  <option value="2">4-20 minutes</option>
-                  <option value="3">Over 20 minutes</option>
-                </select>
-                
-                <select
-                  value={currentFilters.uploadDate}
-                  onChange={(e) => handleFilterChange('uploadDate', e.target.value)}
-                  className="px-3 py-1.5 border border-neutral-300 rounded-md text-sm bg-white hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  <option value="all">Any time</option>
-                  <option value="hour">Last hour</option>
-                  <option value="today">Today</option>
-                  <option value="week">This week</option>
-                  <option value="month">This month</option>
-                  <option value="year">This year</option>
-                </select>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -335,7 +353,15 @@ export default function SearchPage({ videos, user, query, filters }: SearchPageP
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   try {
-    const { q: query, category, duration, uploadDate, sort } = context.query;
+    const { 
+      q: query, 
+      category, 
+      duration, 
+      uploadDate, 
+      sort,
+      quality,
+      viewCount
+    } = context.query;
     
     // If no query, redirect to videos page
     if (!query || typeof query !== 'string') {
@@ -363,6 +389,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     if (duration && duration !== 'all') searchParams.append('duration', duration as string);
     if (uploadDate && uploadDate !== 'all') searchParams.append('uploadDate', uploadDate as string);
     if (sort && sort !== 'relevance') searchParams.append('sort', sort as string);
+    if (quality && quality !== '') searchParams.append('quality', quality as string);
+    if (viewCount && viewCount !== '') searchParams.append('viewCount', viewCount as string);
     
     const searchResponse = await fetch(`${baseUrl}/api/search?${searchParams.toString()}`);
     let videos = [];
@@ -399,10 +427,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         user,
         query,
         filters: {
-          category: category || 'all',
-          duration: duration || 'all',
-          uploadDate: uploadDate || 'all',
-          sort: sort || 'relevance'
+          uploadDate: uploadDate || '',
+          duration: duration || '',
+          quality: quality || '',
+          viewCount: viewCount || '',
+          sort: sort || 'relevance',
+          category: category || ''
         }
       }
     };

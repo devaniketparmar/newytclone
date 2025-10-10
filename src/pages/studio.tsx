@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
-import UniversalLayout from '@/components/UniversalLayout';
+import StudioSidebar from '@/components/StudioSidebar';
 import VideoCard from '@/components/VideoCard';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 import SubscribersDashboard from '@/components/analytics/SubscribersDashboard';
+import ShareButton from '@/components/ShareButton';
 
 interface ChannelStats {
   totalVideos: number;
@@ -23,6 +24,7 @@ interface RecentVideo {
   viewCount: number;
   likeCount: number;
   commentCount: number;
+  shareCount: number;
   publishedAt: string;
   status: 'PROCESSING' | 'READY' | 'FAILED';
   privacy: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
@@ -38,10 +40,18 @@ export default function ChannelStudio({ user, channelStats, recentVideos }: Chan
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Handle tab from URL query
+  useEffect(() => {
+    if (router.query.tab && typeof router.query.tab === 'string') {
+      setActiveTab(router.query.tab);
+    }
+  }, [router.query.tab]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [privacyFilter, setPrivacyFilter] = useState('all');
   const [dataLoading, setDataLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const formatNumber = (num: number | null | undefined) => {
     if (num === null || num === undefined) return 'N/A';
@@ -91,31 +101,46 @@ export default function ChannelStudio({ user, channelStats, recentVideos }: Chan
 
   if (!user) {
     return (
-      <UniversalLayout user={user}>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-            <p className="text-gray-600 mb-6">You need to be logged in to access YouTube Studio.</p>
-            <button
-              onClick={() => router.push('/auth')}
-              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Sign In
-            </button>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-6">You need to be logged in to access YouTube Studio.</p>
+          <button
+            onClick={() => router.push('/auth')}
+            className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Sign In
+          </button>
         </div>
-      </UniversalLayout>
+      </div>
     );
   }
 
   return (
-    <UniversalLayout user={user}>
-      <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Studio Sidebar */}
+      <StudioSidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)} 
+        user={user} 
+      />
+      
+      {/* Main Content */}
+      <div className="flex-1 lg:ml-0">
         {/* Header */}
         <div className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between py-6">
               <div className="flex items-center space-x-4">
+                {/* Mobile menu button */}
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
                 <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center">
                   <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
@@ -416,6 +441,7 @@ export default function ChannelStudio({ user, channelStats, recentVideos }: Chan
                             <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
                               <span>{formatNumber(video.viewCount)} views</span>
                               <span>{formatNumber(video.likeCount)} likes</span>
+                              <span>{formatNumber(video.shareCount)} shares</span>
                               <span>{video.publishedAt ? new Date(video.publishedAt).toLocaleDateString() : 'N/A'}</span>
                             </div>
                           </div>
@@ -432,6 +458,13 @@ export default function ChannelStudio({ user, channelStats, recentVideos }: Chan
                             >
                               Edit
                             </button>
+         <ShareButton
+           videoId={video.id}
+           videoTitle={video.title}
+           videoUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/video/${video.id}`}
+           variant="minimal"
+           className="text-gray-600 hover:text-gray-700 text-sm font-medium"
+         />
                           </div>
                         </div>
                       ))}
@@ -744,7 +777,7 @@ export default function ChannelStudio({ user, channelStats, recentVideos }: Chan
           )}
         </div>
       </div>
-    </UniversalLayout>
+    </div>
   );
 }
 

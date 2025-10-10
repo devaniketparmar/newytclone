@@ -85,6 +85,7 @@ async function handleGetVideo(req: NextApiRequest, res: NextApiResponse, videoId
       viewCount: Number(video.viewCount),
       likeCount: video.likeCount,
       commentCount: video.commentCount,
+      shareCount: video.shareCount,
       createdAt: video.createdAt,
       publishedAt: video.publishedAt || video.createdAt,
       privacy: video.privacy,

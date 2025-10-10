@@ -23,7 +23,9 @@ async function handleSearch(req: NextApiRequest, res: NextApiResponse) {
       category,
       sort = 'relevance',
       duration,
-      uploadDate
+      uploadDate,
+      quality,
+      viewCount
     } = req.query;
 
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
@@ -50,15 +52,24 @@ async function handleSearch(req: NextApiRequest, res: NextApiResponse) {
 
     // Add duration filter
     if (duration) {
-      const durationNum = parseInt(duration as string);
-      switch (durationNum) {
-        case 1: // Under 4 minutes
+      switch (duration) {
+        case 'short': // Under 4 minutes
           searchConditions.duration = { lt: 240 };
           break;
-        case 2: // 4-20 minutes
+        case 'medium': // 4-20 minutes
           searchConditions.duration = { gte: 240, lt: 1200 };
           break;
-        case 3: // Over 20 minutes
+        case 'long': // Over 20 minutes
+          searchConditions.duration = { gte: 1200 };
+          break;
+        // Legacy numeric support
+        case '1': // Under 4 minutes
+          searchConditions.duration = { lt: 240 };
+          break;
+        case '2': // 4-20 minutes
+          searchConditions.duration = { gte: 240, lt: 1200 };
+          break;
+        case '3': // Over 20 minutes
           searchConditions.duration = { gte: 1200 };
           break;
       }
@@ -82,6 +93,38 @@ async function handleSearch(req: NextApiRequest, res: NextApiResponse) {
           break;
         case 'year':
           searchConditions.publishedAt = { gte: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000) };
+          break;
+      }
+    }
+
+    // Add video quality filter
+    if (quality) {
+      switch (quality) {
+        case 'hd':
+          // HD videos typically have resolution >= 720p
+          searchConditions.resolution = { contains: '720' };
+          break;
+        case 'sd':
+          // SD videos typically have resolution < 720p
+          searchConditions.resolution = { not: { contains: '720' } };
+          break;
+      }
+    }
+
+    // Add view count filter
+    if (viewCount) {
+      switch (viewCount) {
+        case 'low':
+          // Under 1K views
+          searchConditions.viewCount = { lt: 1000 };
+          break;
+        case 'medium':
+          // 1K-100K views
+          searchConditions.viewCount = { gte: 1000, lt: 100000 };
+          break;
+        case 'high':
+          // 100K+ views
+          searchConditions.viewCount = { gte: 100000 };
           break;
       }
     }

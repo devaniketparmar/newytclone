@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import SubscriptionButton from './SubscriptionButton';
 import VideoMenu from './VideoMenu';
+import ShareButton from './ShareButton';
 
 interface VideoCardProps {
   video: {
@@ -140,6 +141,17 @@ export default function VideoCard({
             
             {/* Action buttons */}
             <div className="flex items-center space-x-1">
+              {/* Share Button */}
+              <div onClick={(e) => e.stopPropagation()}>
+                <ShareButton
+                  videoId={video.id}
+                  videoTitle={video.title}
+                  videoUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/video/${video.id}`}
+                  variant="icon-only"
+                  className="p-1 text-neutral-500 hover:text-gray-800 hover:bg-gray-50 rounded transition-colors"
+                />
+              </div>
+              
               {/* Video Menu for all users */}
               {user && (
                 <VideoMenu 
@@ -279,6 +291,17 @@ export default function VideoCard({
 
         {/* Action buttons */}
         <div className="absolute top-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          {/* Share Button */}
+          <div onClick={(e) => e.stopPropagation()}>
+            <ShareButton
+              videoId={video.id}
+              videoTitle={video.title}
+              videoUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/video/${video.id}`}
+              variant="icon-only"
+              className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white text-neutral-600 hover:text-gray-800 rounded-lg transition-all duration-200 shadow-lg"
+            />
+          </div>
+          
           {/* Edit/Delete buttons for video owner */}
           {user && video.channel.userId === user.id && onEdit && onDelete && (
             <>

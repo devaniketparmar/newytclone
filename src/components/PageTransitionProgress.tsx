@@ -81,7 +81,7 @@ export default function PageTransitionProgress({ className = '' }: PageTransitio
       clearTimeout(completeTimer);
       clearTimeout(hideTimer);
     };
-  }, [router.events]);
+  }, []); // Empty dependency array - only run once on mount
 
   if (!isLoading) return null;
 
