@@ -21,6 +21,13 @@ export default function YourChannelMenu({ user, isCollapsed, onNavigate }: YourC
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
+  // Check if any submenu item is currently active
+  const isSubmenuActive = router.pathname === '/studio' || 
+                         router.pathname === '/my-videos' || 
+                         router.pathname === '/upload' ||
+                         router.pathname.startsWith('/channel/') ||
+                         router.pathname.startsWith('/edit-video/');
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -34,10 +41,14 @@ export default function YourChannelMenu({ user, isCollapsed, onNavigate }: YourC
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close menu on route change
+  // Auto-expand when submenu is active
   useEffect(() => {
-    setIsOpen(false);
-  }, [router.pathname]);
+    if (isSubmenuActive) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  }, [isSubmenuActive]);
 
   const channelMenuItems: ChannelMenuItem[] = [
     {
@@ -93,15 +104,22 @@ export default function YourChannelMenu({ user, isCollapsed, onNavigate }: YourC
     }
   ];
 
+  // Auto-expand when submenu is active and sidebar is not collapsed
+  useEffect(() => {
+    if (isSubmenuActive && !isCollapsed) {
+      setIsOpen(true);
+    } else if (isCollapsed) {
+      setIsOpen(false);
+    }
+  }, [isSubmenuActive, isCollapsed]);
+
   const handleItemClick = (path: string) => {
     onNavigate(path);
+    // Close menu after navigation
     setIsOpen(false);
   };
 
-  const isActive = router.pathname.startsWith('/channel/') || 
-                   router.pathname === '/my-videos' || 
-                   router.pathname === '/upload' ||
-                   router.pathname === '/playlists';
+  const isActive = isSubmenuActive;
 
   if (isCollapsed) {
     return (

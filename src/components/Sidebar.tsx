@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import YourChannelMenu from './YourChannelMenu';
+import ExploreMenu from './explore/ExploreMenu';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -183,118 +184,6 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
     }
   ];
 
-  const exploreItems: NavigationItem[] = [
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m2-10a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      label: 'Gaming',
-      path: '/category/gaming',
-      active: router.pathname === '/category/gaming'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-        </svg>
-      ),
-      label: 'Music',
-      path: '/category/music',
-      active: router.pathname === '/category/music'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      ),
-      label: 'Education',
-      path: '/category/education',
-      active: router.pathname === '/category/education'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-        </svg>
-      ),
-      label: 'News',
-      path: '/category/news',
-      active: router.pathname === '/category/news'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ),
-      label: 'Sports',
-      path: '/category/sports',
-      active: router.pathname === '/category/sports'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
-      label: 'Technology',
-      path: '/category/technology',
-      active: router.pathname === '/category/technology'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m2-10a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      label: 'Entertainment',
-      path: '/category/entertainment',
-      active: router.pathname === '/category/entertainment'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-        </svg>
-      ),
-      label: 'Science',
-      path: '/category/science',
-      active: router.pathname === '/category/science'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m2-10a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      label: 'Comedy',
-      path: '/category/comedy',
-      active: router.pathname === '/category/comedy'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      label: 'Travel',
-      path: '/category/travel',
-      active: router.pathname === '/category/travel'
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
-        </svg>
-      ),
-      label: 'Food',
-      path: '/category/food',
-      active: router.pathname === '/category/food'
-    }
-  ];
 
   const settingsItems: NavigationItem[] = [
     {
@@ -673,69 +562,10 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             <div className={`border-t border-neutral-200 ${isCollapsed ? 'mx-2' : 'mx-4'}`} />
 
             {/* Explore Section */}
-            <div className={isCollapsed ? 'p-3' : 'p-4'}>
-              {!isCollapsed && (
-                <div className="px-4 py-2 mb-2">
-                  <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    Explore
-                  </h3>
-                </div>
-              )}
-              <div className={isCollapsed ? 'space-y-3' : 'space-y-1'}>
-                {exploreItems.map((item, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleNavigation(item.path)}
-                    className={`
-                      w-full flex items-center ${isCollapsed ? 'justify-center px-4 py-4' : 'space-x-4 px-4 py-3'} rounded-2xl text-left transition-all duration-300 group relative overflow-hidden
-                      ${item.active 
-                        ? isCollapsed 
-                          ? 'bg-gradient-to-br from-green-50 to-green-100 text-green-700 font-semibold shadow-lg shadow-green-100/50 border border-green-200/50' 
-                          : 'bg-red-50 text-red-700 font-semibold shadow-sm'
-                        : isCollapsed
-                          ? 'text-neutral-600 hover:bg-gradient-to-br hover:from-neutral-50 hover:to-neutral-100 hover:text-neutral-800 hover:shadow-md hover:shadow-neutral-100/50 hover:border hover:border-neutral-200/50'
-                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
-                      }
-                      ${isCollapsed ? 'hover:scale-110 hover:-translate-y-0.5' : ''}
-                    `}
-                    title={item.label}
-                  >
-                    {/* Background glow effect for active items */}
-                    {item.active && isCollapsed && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-green-400/10 to-green-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    )}
-                    
-                    <span className={`
-                      transition-all duration-300 flex-shrink-0 relative z-10 ${isCollapsed ? 'w-7 h-7' : ''}
-                      ${item.active 
-                        ? 'text-green-600 drop-shadow-sm' 
-                        : 'text-neutral-500 group-hover:text-neutral-700 group-hover:drop-shadow-sm'
-                      }
-                      ${isCollapsed ? 'group-hover:scale-110' : ''}
-                    `}>
-                      {item.icon}
-                    </span>
-                    
-                    <span className={`text-sm font-medium flex-1 truncate relative z-10 ${isCollapsed ? 'hidden' : ''}`}>{item.label}</span>
-                    
-                    {/* Active indicator for expanded state */}
-                    {item.active && !isCollapsed && (
-                      <div className="ml-auto w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full shadow-sm relative z-10"></div>
-                    )}
-                    
-                    {/* Enhanced active indicator for collapsed state */}
-                    {item.active && isCollapsed && (
-                      <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-green-500 to-green-600 rounded-full shadow-lg shadow-green-500/30"></div>
-                    )}
-                    
-                    {/* Subtle pulse animation for active collapsed items */}
-                    {item.active && isCollapsed && (
-                      <div className="absolute inset-0 rounded-2xl bg-green-500/5 animate-pulse"></div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <ExploreMenu 
+              isCollapsed={isCollapsed} 
+              onNavigate={handleNavigation}
+            />
 
             {/* Divider */}
             <div className="mx-4 border-t border-neutral-200" />
