@@ -56,6 +56,52 @@ export class ClientAuth {
     }
   }
 
+  static async fetchComprehensiveAnalytics(period: string = '28d', metric: string = 'overview') {
+    try {
+      const response = await this.makeAuthenticatedRequest(
+        `/api/analytics/comprehensive?period=${period}&metric=${metric}`
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `API request failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || 'API request failed');
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Comprehensive analytics fetch error:', error);
+      throw error;
+    }
+  }
+
+  static async fetchAnalyticsInsights(period: string = '28d', type: string = 'all') {
+    try {
+      const response = await this.makeAuthenticatedRequest(
+        `/api/analytics/insights?period=${period}&type=${type}`
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `API request failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || 'API request failed');
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Analytics insights fetch error:', error);
+      throw error;
+    }
+  }
+
   static async fetchSubscribersAnalytics(userId: string, period: string = '28d', metric: string = 'overview') {
     try {
       const response = await this.makeAuthenticatedRequest(

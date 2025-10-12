@@ -247,6 +247,22 @@ async function handleSearch(req: NextApiRequest, res: NextApiResponse) {
 
   } catch (error) {
     console.error('Error searching videos:', error);
+    
+    // Handle specific database errors
+    if (error.code === 'P2002') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid search parameters'
+      });
+    }
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        error: 'No videos found'
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       error: 'Internal server error. Please try again later.'
@@ -296,6 +312,7 @@ async function getSearchSuggestions(query: string, prisma: any) {
     return suggestions;
   } catch (error) {
     console.error('Error getting search suggestions:', error);
+    // Return empty array instead of throwing error to prevent search failure
     return [];
   }
 }

@@ -1,8 +1,10 @@
 import React from 'react';
+import TimeAgo from './TimeAgo';
 import { useRouter } from 'next/router';
 import SubscriptionButton from './SubscriptionButton';
 import VideoMenu from './VideoMenu';
 import ShareButton from './ShareButton';
+import LikeButton from './LikeButton';
 
 interface VideoCardProps {
   video: {
@@ -75,6 +77,8 @@ export default function VideoCard({
     if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`;
     return `${Math.floor(diffInSeconds / 31536000)} years ago`;
   };
+
+  // Using reusable TimeAgo component (imported) for stable SSR hydration and client updates
 
   const handleCardClick = () => {
     router.push(`/video/${video.id}`);
@@ -204,11 +208,11 @@ export default function VideoCard({
               <span>{formatViewCount(video.viewCount)}</span>
             </div>
             <span className="text-neutral-300">•</span>
-            <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1">
               <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{formatTimeAgo(video.publishedAt)}</span>
+              <span><TimeAgo date={video.publishedAt} /></span>
             </div>
           </div>
 
@@ -291,6 +295,19 @@ export default function VideoCard({
 
         {/* Action buttons */}
         <div className="absolute top-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          {/* Like Button */}
+          {user && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <LikeButton
+                videoId={video.id}
+                initialLikeCount={video.likeCount}
+                size="sm"
+                showCounts={false}
+                className="p-2 bg-white/90 backdrop-blur-sm hover:bg-white text-neutral-600 hover:text-red-600 rounded-lg transition-all duration-200 shadow-lg"
+              />
+            </div>
+          )}
+          
           {/* Share Button */}
           <div onClick={(e) => e.stopPropagation()}>
             <ShareButton
@@ -377,7 +394,7 @@ export default function VideoCard({
                 <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>{formatTimeAgo(video.publishedAt)}</span>
+                <span><TimeAgo date={video.publishedAt} /></span>
               </div>
             </div>
           </div>

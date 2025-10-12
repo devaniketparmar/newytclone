@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             contains: query,
             mode: 'insensitive'
           },
-          status: 'PUBLISHED',
+          status: 'READY',
           privacy: 'PUBLIC'
         },
         select: {

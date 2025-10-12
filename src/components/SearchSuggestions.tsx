@@ -136,31 +136,37 @@ export default function SearchSuggestions({
   return (
     <div 
       ref={suggestionsRef}
-      className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
+      className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-2xl z-50 max-h-96 overflow-y-auto
+        animate-in slide-in-from-top-2 duration-300 ease-out"
     >
       {loading ? (
-        <div className="p-4 text-center text-gray-500">
-          <div className="inline-flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-            <span className="text-sm">Searching...</span>
+        <div className="p-6 text-center">
+          <div className="inline-flex items-center space-x-3">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+            <span className="text-sm font-medium text-gray-600">Searching...</span>
           </div>
         </div>
       ) : (
-        <div className="py-2">
+        <div className="py-3">
           {/* Search History */}
           {!query.trim() && searchHistory.length > 0 && (
-            <div className="px-4 py-2 border-b border-gray-100">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Recent Searches</div>
+            <div className="px-4 py-3 border-b border-gray-100/50">
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center space-x-2">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Recent Searches</span>
+              </div>
               {searchHistory.slice(0, 5).map((item, index) => (
                 <button
                   key={`history-${index}`}
                   onClick={() => onSuggestionClick(item)}
-                  className="w-full px-2 py-2 text-left hover:bg-gray-50 transition-colors flex items-center space-x-3 text-sm text-gray-700"
+                  className="w-full px-3 py-2.5 text-left hover:bg-blue-50 transition-all duration-200 flex items-center space-x-3 text-sm text-gray-700 rounded-lg group"
                 >
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="truncate">{item}</span>
+                  <span className="truncate group-hover:text-blue-700 transition-colors">{item}</span>
                 </button>
               ))}
             </div>
@@ -171,8 +177,8 @@ export default function SearchSuggestions({
             <button
               key={suggestion.id}
               onClick={() => handleSuggestionClick(suggestion)}
-              className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center space-x-3 ${
-                index === selectedIndex ? 'bg-gray-50' : ''
+              className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-all duration-200 flex items-center space-x-3 group ${
+                index === selectedIndex ? 'bg-blue-50' : ''
               }`}
             >
               <div className="flex-shrink-0">
@@ -180,19 +186,26 @@ export default function SearchSuggestions({
               </div>
               
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 truncate">
+                <div className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700 transition-colors">
                   {suggestion.text}
                 </div>
                 
                 {suggestion.type === 'channel' && suggestion.subscriberCount && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {formatCount(suggestion.subscriberCount)} subscribers
+                  <div className="text-xs text-gray-500 mt-1 flex items-center space-x-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span>{formatCount(suggestion.subscriberCount)} subscribers</span>
                   </div>
                 )}
                 
                 {suggestion.type === 'video' && suggestion.viewCount && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {formatCount(suggestion.viewCount)} views
+                  <div className="text-xs text-gray-500 mt-1 flex items-center space-x-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>{formatCount(suggestion.viewCount)} views</span>
                   </div>
                 )}
               </div>
@@ -202,7 +215,7 @@ export default function SearchSuggestions({
                   <img 
                     src={suggestion.thumbnail} 
                     alt="" 
-                    className="w-8 h-8 rounded-full object-cover"
+                    className="w-10 h-10 rounded-full object-cover border border-gray-200"
                   />
                 </div>
               )}
@@ -210,8 +223,15 @@ export default function SearchSuggestions({
           ))}
           
           {suggestions.length === 0 && query.trim() && (
-            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-              No suggestions found for "{query}"
+            <div className="px-4 py-6 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-sm text-gray-500">
+                No suggestions found for "{query}"
+              </p>
             </div>
           )}
         </div>

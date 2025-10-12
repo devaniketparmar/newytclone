@@ -116,16 +116,26 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
         
         if (data.success) {
           if (reset) {
-            setResults(data.data.videos);
+            setResults(data.data.videos || []);
           } else {
-            setResults(prev => [...prev, ...data.data.videos]);
+            setResults(prev => [...prev, ...(data.data.videos || [])]);
           }
-          setHasMore(data.data.pagination.page < data.data.pagination.pages);
+          setHasMore(data.data.pagination && data.data.pagination.page < data.data.pagination.pages);
           setSuggestions(data.data.suggestions || []);
+        } else {
+          console.error('Search API error:', data.error);
+          setResults([]);
+          setSuggestions([]);
         }
+      } else {
+        console.error('Search request failed:', response.status, response.statusText);
+        setResults([]);
+        setSuggestions([]);
       }
     } catch (error) {
       console.error('Search error:', error);
+      setResults([]);
+      setSuggestions([]);
     } finally {
       setLoading(false);
     }
@@ -170,10 +180,20 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
           setSuggestions(data.data.suggestions || []);
           // Set top 5 most relevant videos for suggestions
           setResults(data.data.videos || []);
+        } else {
+          console.error('Suggestions API error:', data.error);
+          setSuggestions([]);
+          setResults([]);
         }
+      } else {
+        console.error('Suggestions request failed:', response.status);
+        setSuggestions([]);
+        setResults([]);
       }
     } catch (error) {
       console.error('Error fetching suggestions:', error);
+      setSuggestions([]);
+      setResults([]);
     }
   };
 
@@ -202,10 +222,20 @@ export default function Search({ onSearch, placeholder = "Search", showFilters =
           setSuggestions(data.data.suggestions || []);
           // Don't set video results - only show suggestions
           setResults([]);
+        } else {
+          console.error('Suggestions API error:', data.error);
+          setSuggestions([]);
+          setResults([]);
         }
+      } else {
+        console.error('Suggestions request failed:', response.status);
+        setSuggestions([]);
+        setResults([]);
       }
     } catch (error) {
       console.error('Error fetching suggestions:', error);
+      setSuggestions([]);
+      setResults([]);
     }
   };
 

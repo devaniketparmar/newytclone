@@ -51,6 +51,7 @@ model User {
   hashtagBlacklist HashtagBlacklist[]
   watchLater        WatchLater[]
   shares            Share[]
+  watchTimeAnalytics WatchTimeAnalytics[]
 
   @@map("users")
 }
@@ -76,6 +77,7 @@ model Channel {
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   videos          Video[]
   subscriptions   Subscription[]
+  insights        AnalyticsInsight[]
 
   @@map("channels")
 }
@@ -134,6 +136,8 @@ model Video {
   playlistVideos  PlaylistVideo[]
   watchLater      WatchLater[]
   shares          Share[]
+  insights        AnalyticsInsight[]
+  watchTimeAnalytics WatchTimeAnalytics[]
 
   @@map("videos")
 }
@@ -378,6 +382,14 @@ model VideoAnalytics {
   shares              Int      @default(0)
   subscribersGained  Int      @default(0) @map("subscribers_gained")
   subscribersLost     Int      @default(0) @map("subscribers_lost")
+  avgWatchDuration    Int      @default(0) @map("avg_watch_duration")
+  completionRate      Decimal  @default(0) @map("completion_rate")
+  engagementRate      Decimal  @default(0) @map("engagement_rate")
+  trafficSource       Json     @default("{}") @map("traffic_source")
+  deviceType          Json     @default("{}") @map("device_type")
+  country             Json     @default("{}")
+  ageGroup            Json     @default("{}") @map("age_group")
+  gender              Json     @default("{}")
   createdAt           DateTime @default(now()) @map("created_at")
 
   @@unique([videoId, date])
@@ -394,6 +406,17 @@ model ChannelAnalytics {
   subscribersGained   Int      @default(0) @map("subscribers_gained")
   subscribersLost     Int      @default(0) @map("subscribers_lost")
   videosPublished     Int      @default(0) @map("videos_published")
+  totalLikes          Int      @default(0) @map("total_likes")
+  totalComments       Int      @default(0) @map("total_comments")
+  totalShares         Int      @default(0) @map("total_shares")
+  avgWatchTime        Int      @default(0) @map("avg_watch_time")
+  engagementRate      Decimal  @default(0) @map("engagement_rate")
+  revenue             Decimal  @default(0)
+  trafficSource       Json     @default("{}") @map("traffic_source")
+  deviceType          Json     @default("{}") @map("device_type")
+  country             Json     @default("{}")
+  ageGroup            Json     @default("{}") @map("age_group")
+  gender              Json     @default("{}")
   createdAt           DateTime @default(now()) @map("created_at")
 
   @@unique([channelId, date])
@@ -562,9 +585,69 @@ model Share {
   @@map("shares")
 }
 
+model AnalyticsInsight {
+  id          String   @id @default(uuid())
+  channelId   String?  @map("channel_id")
+  videoId     String?  @map("video_id")
+  type        InsightType
+  title       String
+  description String
+  priority    InsightPriority @default(MEDIUM)
+  data        Json     @default("{}")
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at")
+  expiresAt   DateTime? @map("expires_at")
+
+  // Relations
+  channel     Channel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  video       Video?   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@map("analytics_insights")
+}
+
+model WatchTimeAnalytics {
+  id              String   @id @default(uuid())
+  videoId         String   @map("video_id")
+  userId          String?  @map("user_id")
+  sessionId       String   @map("session_id")
+  watchDuration   Int      @map("watch_duration")
+  totalDuration   Int      @map("total_duration")
+  completionRate  Decimal  @map("completion_rate")
+  pauseCount      Int      @default(0) @map("pause_count")
+  seekCount       Int      @default(0) @map("seek_count")
+  deviceType      String?  @map("device_type")
+  browser         String?
+  country         String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  video           Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("watch_time_analytics")
+}
+
 enum ShareType {
   SOCIAL_MEDIA
   COPY_LINK
   EMBED_CODE
   DIRECT_MESSAGE
+}
+
+enum InsightType {
+  PERFORMANCE_ALERT
+  GROWTH_OPPORTUNITY
+  ENGAGEMENT_INSIGHT
+  CONTENT_RECOMMENDATION
+  AUDIENCE_INSIGHT
+  REVENUE_OPPORTUNITY
+  TRENDING_ALERT
+  COMPETITOR_ANALYSIS
+}
+
+enum InsightPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }

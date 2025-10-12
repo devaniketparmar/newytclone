@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import tailwindScrollbar from 'tailwind-scrollbar';
 
 const config: Config = {
   content: [
@@ -211,7 +212,10 @@ const config: Config = {
     },
   },
   plugins: [
-    require('tailwind-scrollbar')({ nocompatible: true }),
+    // Use the typed import instead of require to satisfy TS/ESLint rules
+    // tailwind-scrollbar provides a compatible plugin factory
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    tailwindScrollbar({ nocompatible: true }),
   ],
   darkMode: 'class',
 };

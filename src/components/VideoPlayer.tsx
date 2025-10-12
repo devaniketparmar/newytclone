@@ -49,6 +49,8 @@ export default function VideoPlayer({
   const [currentQuality, setCurrentQuality] = useState('Auto');
   const [isPictureInPicture, setIsPictureInPicture] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const watchAccumRef = useRef<number>(0); // accumulated seconds since last heartbeat
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const qualityOptions = ['Auto', '1080p', '720p', '480p', '360p', '240p'];
 
@@ -75,6 +77,9 @@ export default function VideoPlayer({
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('enterpictureinpicture', handleEnterPictureInPicture);
     video.addEventListener('leavepictureinpicture', handleLeavePictureInPicture);
+  video.addEventListener('play', startHeartbeats);
+  video.addEventListener('pause', sendFinalHeartbeat);
+  video.addEventListener('ended', sendFinalHeartbeat);
 
     // Fullscreen change listener
     const handleFullscreenChange = () => {
@@ -134,10 +139,71 @@ export default function VideoPlayer({
       video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('enterpictureinpicture', handleEnterPictureInPicture);
       video.removeEventListener('leavepictureinpicture', handleLeavePictureInPicture);
+  video.removeEventListener('play', startHeartbeats);
+  video.removeEventListener('pause', sendFinalHeartbeat);
+  video.removeEventListener('ended', sendFinalHeartbeat);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+    // Heartbeat helpers: accumulate seconds and POST every 15s while playing
+    const sendWatchHeartbeat = async (seconds: number, position?: number, completed?: boolean) => {
+      try {
+        await fetch(`/api/videos/${videoId}/watchtime`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ secondsWatched: seconds, position, completed, videoDuration: duration })
+        });
+      } catch (e) {
+        // ignore network errors
+      }
+    };
+
+    const startHeartbeats = () => {
+      // reset accumulator
+      if (heartbeatIntervalRef.current) return; // already running
+      watchAccumRef.current = 0;
+      heartbeatIntervalRef.current = setInterval(() => {
+        const toSend = Math.max(1, Math.round(watchAccumRef.current));
+        if (toSend > 0) {
+          sendWatchHeartbeat(toSend, videoRef.current?.currentTime || 0, false);
+          watchAccumRef.current = 0;
+        }
+      }, 15000);
+    };
+
+    const sendFinalHeartbeat = () => {
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+      const toSend = Math.max(0, Math.round(watchAccumRef.current));
+      if (toSend > 0) {
+        sendWatchHeartbeat(toSend, videoRef.current?.currentTime || 0, false);
+        watchAccumRef.current = 0;
+      }
+      // send a final completion heartbeat when video ended or paused long enough
+      if (videoRef.current && videoRef.current.ended) {
+        sendWatchHeartbeat(0, videoRef.current.currentTime || 0, true);
+      }
+    };
+
+    // Increment accumulator on timeupdate
+    useEffect(() => {
+      const v = videoRef.current;
+      if (!v) return;
+      const onTimeUpdate = () => {
+        // increment by delta between currentTime and stored state
+        const delta = Math.max(0, v.currentTime - currentTime);
+        if (delta > 0) {
+          watchAccumRef.current += delta;
+        }
+      };
+
+      v.addEventListener('timeupdate', onTimeUpdate);
+      return () => v.removeEventListener('timeupdate', onTimeUpdate);
+    }, [currentTime]);
 
   const togglePlay = () => {
     const video = videoRef.current;

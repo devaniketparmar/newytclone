@@ -1,6 +1,7 @@
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
 import path from 'path';
+import { exec } from 'child_process';
 
 export interface ThumbnailOptions {
   width?: number;
@@ -36,7 +37,6 @@ export class ThumbnailGenerator {
       }
 
       // Check if FFmpeg is available
-      const { exec } = require('child_process');
       exec('which ffmpeg', (error: any) => {
         if (error) {
           console.log('FFmpeg not available, generating enhanced placeholder instead');
@@ -56,8 +56,7 @@ export class ThumbnailGenerator {
             timestamps: [timeOffset],
             filename: path.basename(pngPath),
             folder: outputDir,
-            size: `${width}x${height}`,
-            quality: quality
+            size: `${width}x${height}`
           })
           .on('end', () => {
             console.log('Thumbnail generated successfully:', pngPath);
@@ -100,7 +99,7 @@ export class ThumbnailGenerator {
       }
 
       // Get video duration first
-      ffmpeg.ffprobe(videoPath, (err, metadata) => {
+      ffmpeg.ffprobe(videoPath, (err: any, metadata: any) => {
         if (err) {
           reject(err);
           return;
@@ -119,8 +118,7 @@ export class ThumbnailGenerator {
             timestamps: timestamps,
             filename: 'thumb_%s.png',
             folder: outputDir,
-            size: `${width}x${height}`,
-            quality: quality
+            size: `${width}x${height}`
           })
           .on('end', () => {
             const thumbnailPaths = timestamps.map((timestamp, index) => 
@@ -143,7 +141,7 @@ export class ThumbnailGenerator {
    */
   static async getVideoMetadata(videoPath: string): Promise<any> {
     return new Promise((resolve, reject) => {
-      ffmpeg.ffprobe(videoPath, (err, metadata) => {
+      ffmpeg.ffprobe(videoPath, (err: any, metadata: any) => {
         if (err) {
           reject(err);
           return;
