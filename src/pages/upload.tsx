@@ -229,6 +229,8 @@ interface UploadFormData {
   allowEmbedding: boolean;
   showViewCount: boolean;
   allowLiveStreaming: boolean;
+  // Video Type
+  videoType: 'normal' | 'shorts';
   // Video Elements
   endScreenEnabled: boolean;
   endScreenTemplate: 'subscribe' | 'video' | 'playlist' | 'website';
@@ -264,6 +266,7 @@ export default function UploadPage() {
   const [customThumbnailFile, setCustomThumbnailFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number>(0);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -291,6 +294,8 @@ export default function UploadPage() {
     allowEmbedding: true,
     showViewCount: true,
     allowLiveStreaming: false,
+    // Video Type
+    videoType: 'normal',
     // Video Elements
     endScreenEnabled: false,
     endScreenTemplate: 'subscribe',
@@ -447,6 +452,13 @@ export default function UploadPage() {
       return 'Invalid file type. Please select a video file.';
     }
 
+    return null;
+  };
+
+  const validateVideoDuration = (duration: number, videoType: 'normal' | 'shorts'): string | null => {
+    if (videoType === 'shorts' && duration > 60) {
+      return 'Shorts videos must be 60 seconds or less';
+    }
     return null;
   };
 
@@ -794,6 +806,24 @@ export default function UploadPage() {
     const videoUrl = URL.createObjectURL(file);
     setVideoPreviewUrl(videoUrl);
     
+    // Get video duration
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      setVideoDuration(duration);
+      
+      // Validate duration based on video type
+      const durationError = validateVideoDuration(duration, formData.videoType);
+      if (durationError) {
+        setError(durationError);
+        setValidationErrors(prev => ({ ...prev, duration: durationError }));
+      } else {
+        clearValidationError('duration');
+      }
+    };
+    video.src = videoUrl;
+    
     // Auto-fill title if empty
     if (!formData.title) {
       const fileName = file.name.replace(/\.[^/.]+$/, '');
@@ -876,6 +906,9 @@ export default function UploadPage() {
       uploadData.append('allowEmbedding', formData.allowEmbedding.toString());
       uploadData.append('showViewCount', formData.showViewCount.toString());
       uploadData.append('allowLiveStreaming', formData.allowLiveStreaming.toString());
+      // Video Type
+      uploadData.append('videoType', formData.videoType);
+      uploadData.append('duration', videoDuration.toString());
       
       // Video Elements
       uploadData.append('endScreenEnabled', formData.endScreenEnabled.toString());
@@ -1133,96 +1166,280 @@ export default function UploadPage() {
             {/* Step 1: Upload Video */}
             {currentStep === 'upload' && (
               <div className="space-y-6">
-                <div
-                  className={`border-2 border-dashed rounded-lg p-12 text-center transition-all duration-300 ${
-                    dragActive
-                      ? 'border-red-500 bg-red-50'
-                      : selectedFile
-                      ? 'border-green-500 bg-green-50'
-                      : validationErrors.file
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-gray-300 hover:border-red-400 hover:bg-gray-50'
-                  }`}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  {selectedFile ? (
-                    <div className="space-y-6">
-                      {/* Enhanced Video Preview */}
-                      {videoPreviewUrl && (
-                        <VideoPreview
-                          videoUrl={videoPreviewUrl}
-                          fileName={selectedFile.name}
-                          fileSize={selectedFile.size}
-                          fileType={selectedFile.type}
-                          title="Video Preview"
-                          subtitle="Click to play"
-                          height="lg"
-                          context="preview"
-                        />
-                      )}
-                      
-                      {/* Enhanced File Info */}
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-lg">
-                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
+                {/* Video Type Selection - First Step */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-3">
+                      Choose Video Type *
+                    </label>
+                    <p className="text-sm text-gray-600 mb-4">Select the type of video you want to upload</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Normal Video Option */}
+                      <div 
+                        className={`relative p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                          formData.videoType === 'normal'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, videoType: 'normal' }));
+                          // Re-validate duration if needed
+                          if (videoDuration > 0) {
+                            const durationError = validateVideoDuration(videoDuration, 'normal');
+                            if (durationError) {
+                              setValidationErrors(prev => ({ ...prev, duration: durationError }));
+                            } else {
+                              clearValidationError('duration');
+                            }
+                          }
+                        }}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            formData.videoType === 'normal'
+                              ? 'border-blue-500 bg-blue-500'
+                              : 'border-gray-300'
+                          }`}>
+                            {formData.videoType === 'normal' && (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-black">{selectedFile.name}</h3>
-                            <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-black font-medium">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
-                              <span className="text-sm text-green-600 font-medium">✓ Upload Ready</span>
-                            </div>
+                            <h3 className="text-lg font-semibold text-black">Normal Video</h3>
+                            <p className="text-sm text-gray-600">Standard long-form videos</p>
+                            <p className="text-xs text-gray-500 mt-1">No duration limit</p>
                           </div>
-                          <button
-                            onClick={() => {
-                              setSelectedFile(null);
-                              if (videoPreviewUrl) {
-                                URL.revokeObjectURL(videoPreviewUrl);
-                                setVideoPreviewUrl(null);
-                              }
-                            }}
-                            className="px-4 py-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
-                          >
-                            Remove
-                          </button>
+                        </div>
+                        <div className="mt-3 flex items-center space-x-2">
+                          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-sm text-gray-600">Standard format</span>
+                        </div>
+                      </div>
+
+                      {/* Shorts Option */}
+                      <div 
+                        className={`relative p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                          formData.videoType === 'shorts'
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, videoType: 'shorts' }));
+                          // Re-validate duration if needed
+                          if (videoDuration > 0) {
+                            const durationError = validateVideoDuration(videoDuration, 'shorts');
+                            if (durationError) {
+                              setValidationErrors(prev => ({ ...prev, duration: durationError }));
+                            } else {
+                              clearValidationError('duration');
+                            }
+                          }
+                        }}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            formData.videoType === 'shorts'
+                              ? 'border-purple-500 bg-purple-500'
+                              : 'border-gray-300'
+                          }`}>
+                            {formData.videoType === 'shorts' && (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-black">Shorts</h3>
+                            <p className="text-sm text-gray-600">Short-form vertical videos</p>
+                            <p className="text-xs text-purple-600 mt-1 font-medium">Max 60 seconds</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center space-x-2">
+                          <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-sm text-purple-600 font-medium">Mobile-first</span>
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto">
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-black">Upload a video</h3>
-                        <p className="text-sm text-black">Drag and drop your video here, or click to browse</p>
-                        <p className="text-xs text-black mt-1">MP4, WebM, OGG, AVI, MOV (max 500MB)</p>
-                      </div>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-                      >
-                        Select File
-                      </button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="video/*"
-                        onChange={handleFileInputChange}
-                        className="hidden"
-                      />
-                    </div>
-                  )}
+                  </div>
                 </div>
-                
+
+                {/* File Upload Section */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-3">
+                      Upload Video File *
+                    </label>
+                    <p className="text-sm text-gray-600 mb-4">
+                      {formData.videoType === 'shorts' 
+                        ? 'Upload a short video (max 60 seconds) for mobile viewing'
+                        : 'Upload your video file (max 500MB)'
+                      }
+                    </p>
+                  </div>
+                  
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-12 text-center transition-all duration-300 ${
+                      dragActive
+                        ? 'border-red-500 bg-red-50'
+                        : selectedFile
+                        ? 'border-green-500 bg-green-50'
+                        : validationErrors.file
+                        ? 'border-red-500 bg-red-50'
+                        : 'border-gray-300 hover:border-red-400 hover:bg-gray-50'
+                    }`}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                  >
+                    {selectedFile ? (
+                      <div className="space-y-6">
+                        {/* Enhanced Video Preview */}
+                        {videoPreviewUrl && (
+                          <VideoPreview
+                            videoUrl={videoPreviewUrl}
+                            fileName={selectedFile.name}
+                            fileSize={selectedFile.size}
+                            fileType={selectedFile.type}
+                            title="Video Preview"
+                            subtitle="Click to play"
+                            height="lg"
+                            context="preview"
+                          />
+                        )}
+                        
+                        {/* Enhanced File Info */}
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-lg">
+                              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-black">{selectedFile.name}</h3>
+                              <div className="flex items-center space-x-4 mt-1">
+                                <span className="text-sm text-black font-medium">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
+                                <span className="text-sm text-green-600 font-medium">✓ Upload Ready</span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setSelectedFile(null);
+                                setVideoDuration(0);
+                                if (videoPreviewUrl) {
+                                  URL.revokeObjectURL(videoPreviewUrl);
+                                  setVideoPreviewUrl(null);
+                                }
+                                clearValidationError('file');
+                                clearValidationError('duration');
+                              }}
+                              className="px-4 py-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Video Duration Info */}
+                        {videoDuration > 0 && (
+                          <div className={`p-4 rounded-lg border ${
+                            formData.videoType === 'shorts' && videoDuration > 60
+                              ? 'bg-red-50 border-red-200'
+                              : formData.videoType === 'shorts'
+                              ? 'bg-green-50 border-green-200'
+                              : 'bg-blue-50 border-blue-200'
+                          }`}>
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                formData.videoType === 'shorts' && videoDuration > 60
+                                  ? 'bg-red-500'
+                                  : formData.videoType === 'shorts'
+                                  ? 'bg-green-500'
+                                  : 'bg-blue-500'
+                              }`}>
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0114 0z" />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-black">
+                                  Video Duration: {Math.floor(videoDuration / 60)}:{(videoDuration % 60).toFixed(0).padStart(2, '0')}
+                                </h4>
+                                <p className={`text-sm ${
+                                  formData.videoType === 'shorts' && videoDuration > 60
+                                    ? 'text-red-600'
+                                    : formData.videoType === 'shorts'
+                                    ? 'text-green-600'
+                                    : 'text-blue-600'
+                                }`}>
+                                  {formData.videoType === 'shorts' && videoDuration > 60
+                                    ? '⚠️ This video exceeds the 60-second limit for Shorts'
+                                    : formData.videoType === 'shorts'
+                                    ? '✅ Perfect for Shorts!'
+                                    : '📺 Standard video format'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${
+                          formData.videoType === 'shorts' 
+                            ? 'bg-gradient-to-r from-purple-500 to-pink-500' 
+                            : 'bg-red-500'
+                        }`}>
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {formData.videoType === 'shorts' ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            ) : (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            )}
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-black">
+                            {formData.videoType === 'shorts' ? 'Upload a Short' : 'Upload a video'}
+                          </h3>
+                          <p className="text-sm text-black">
+                            {formData.videoType === 'shorts' 
+                              ? 'Drag and drop your short video here, or click to browse'
+                              : 'Drag and drop your video here, or click to browse'
+                            }
+                          </p>
+                          <p className="text-xs text-black mt-1">
+                            {formData.videoType === 'shorts' 
+                              ? 'MP4, WebM, OGG, AVI, MOV (max 60 seconds, 500MB)'
+                              : 'MP4, WebM, OGG, AVI, MOV (max 500MB)'
+                            }
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className={`px-6 py-2 text-white rounded-lg hover:opacity-90 transition-colors font-medium ${
+                            formData.videoType === 'shorts' 
+                              ? 'bg-gradient-to-r from-purple-600 to-pink-600' 
+                              : 'bg-red-600 hover:bg-red-700'
+                          }`}
+                        >
+                          Select File
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="video/*"
+                          onChange={handleFileInputChange}
+                          className="hidden"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* File Validation Error */}
                 {validationErrors.file && (
                   <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
@@ -1231,6 +1448,18 @@ export default function UploadPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span className="text-sm font-medium">{validationErrors.file}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Duration Validation Error */}
+                {validationErrors.duration && (
+                  <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-sm font-medium">{validationErrors.duration}</span>
                     </div>
                   </div>
                 )}

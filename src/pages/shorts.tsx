@@ -1,129 +1,212 @@
 import React, { useState, useEffect } from 'react';
-import VideoCard from '../components/VideoCard';
-import LoadingPlaceholder from '../components/LoadingPlaceholder';
+import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
+import UniversalLayout from '../components/UniversalLayout';
+import PageHeader from '../components/PageHeader';
+import VerticalShortsFeed from '../components/VerticalShortsFeed';
+import ShortsDiscovery from '../components/ShortsDiscovery';
 
-interface ShortVideo {
+interface ShortsVideo {
   id: string;
   title: string;
   description: string;
-  thumbnailUrl: string;
-  duration: string;
-  views: number;
-  likes: number;
+  thumbnailUrl?: string;
+  videoUrl: string;
+  duration: number;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
   createdAt: string;
+  publishedAt: string;
   channel: {
     id: string;
     name: string;
     avatarUrl: string;
-    subscribers: number;
+    subscriberCount: number;
+    verified: boolean;
   };
-  category: string;
-  isShort: boolean;
+  hashtags?: string[];
 }
 
-export default function ShortsPage() {
-  const [shortVideos, setShortVideos] = useState<ShortVideo[]>([]);
-  const [loading, setLoading] = useState(true);
+interface ShortsPageProps {
+  user: any;
+  initialVideos: ShortsVideo[];
+}
+
+export default function ShortsPage({ user, initialVideos }: ShortsPageProps) {
+  const router = useRouter();
+  const [videos, setVideos] = useState<ShortsVideo[]>(initialVideos);
+  const [currentVideo, setCurrentVideo] = useState<ShortsVideo | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'discovery' | 'feed'>('discovery');
 
   useEffect(() => {
-    fetchShortVideos();
-  }, []);
-
-  const fetchShortVideos = async () => {
-    try {
-      setLoading(true);
-      // For now, use regular videos endpoint and simulate short videos
-      const response = await fetch('/api/videos?limit=20');
-      const data = await response.json();
-      
-      // Transform regular videos to simulate short videos (duration < 60 seconds)
-      const shortVideos = (data.data || []).map((video: any) => ({
-        ...video,
-        duration: `${Math.floor(Math.random() * 60)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
-        isShort: true
-      }));
-      
-      setShortVideos(shortVideos);
-    } catch (error) {
-      console.error('Error fetching short videos:', error);
-    } finally {
-      setLoading(false);
+    if (initialVideos.length > 0) {
+      setCurrentVideo(initialVideos[0]);
     }
+  }, [initialVideos]);
+
+  const handleVideoChange = (video: ShortsVideo) => {
+    setCurrentVideo(video);
   };
 
+  const handleCreateShort = () => {
+    router.push('/shorts/create');
+  };
+
+  const handleAnalytics = () => {
+    router.push('/shorts/analytics');
+  };
+
+  if (activeTab === 'discovery') {
+    return <ShortsDiscovery user={user} />;
+  }
+
   return (
-    <div className="min-h-screen bg-neutral-50">
-      {/* Header */}
-      <div className="bg-white border-b border-neutral-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4l-2 16h14l-2-16M9 8v8M15 8v8" />
+    <UniversalLayout 
+      user={user}
+      pageHeader={
+        <PageHeader
+          title="Shorts"
+          subtitle="Discover and create short-form vertical videos"
+          icon={
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          }
+          iconColor="bg-gradient-to-r from-purple-500 to-pink-500"
+          actions={
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setActiveTab('discovery')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  activeTab === 'discovery'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Discovery
+              </button>
+              <button
+                onClick={() => setActiveTab('feed')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  activeTab === 'feed'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Feed
+              </button>
+              <button
+                onClick={handleCreateShort}
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+              >
+                Create Short
+              </button>
+              <button
+                onClick={handleAnalytics}
+                className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </button>
+            </div>
+          }
+        />
+      }
+    >
+      <div className="min-h-screen bg-black">
+        {videos.length > 0 ? (
+          <VerticalShortsFeed
+            user={user}
+            initialVideos={videos}
+            onVideoChange={handleVideoChange}
+            autoPlay={true}
+            showControls={false}
+          />
+        ) : (
+          <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="text-center text-white">
+              <div className="w-24 h-24 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-neutral-900">
-                Shorts
-              </h1>
+              <h2 className="text-3xl font-bold mb-4">Welcome to Shorts</h2>
+              <p className="text-gray-400 mb-8 max-w-md mx-auto">
+                Create and discover short-form vertical videos that are perfect for mobile viewing
+              </p>
+              <div className="space-y-4">
+                <button
+                  onClick={handleCreateShort}
+                  className="block w-full max-w-xs mx-auto px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+                >
+                  Create Your First Short
+                </button>
+                <button
+                  onClick={() => setActiveTab('discovery')}
+                  className="block w-full max-w-xs mx-auto px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                >
+                  Discover Shorts
+                </button>
+              </div>
             </div>
-            <p className="text-neutral-600">
-              Discover short-form videos and quick content
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 12 }).map((_, index) => (
-              <LoadingPlaceholder key={index} />
-            ))}
-          </div>
-        ) : shortVideos.length > 0 ? (
-          <>
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-neutral-900 mb-4">
-                Short Videos ({shortVideos.length})
-              </h2>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {shortVideos.map((video) => (
-                <div key={video.id} className="relative group">
-                  <VideoCard video={video} />
-                  
-                  {/* Short Badge */}
-                  <div className="absolute top-2 left-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded font-medium">
-                    SHORTS
-                  </div>
-                  
-                  {/* Duration for shorts */}
-                  <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
-                    {video.duration}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 mx-auto mb-4 bg-neutral-200 rounded-full flex items-center justify-center">
-              <svg className="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4l-2 16h14l-2-16M9 8v8M15 8v8" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-neutral-900 mb-2">
-              No short videos available
-            </h3>
-            <p className="text-neutral-600">
-              There are no short videos available at the moment. Check back later!
-            </p>
           </div>
         )}
       </div>
-    </div>
+    </UniversalLayout>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  try {
+    // Check authentication
+    const response = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/me`, {
+      headers: {
+        cookie: context.req.headers.cookie || ''
+      }
+    });
+
+    if (!response.ok) {
+      return {
+        redirect: {
+          destination: '/auth',
+          permanent: false
+        }
+      };
+    }
+
+    const userData = await response.json();
+    const user = userData.data;
+
+    // Fetch initial Shorts videos
+    const shortsResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/shorts?page=1&limit=10`, {
+      headers: {
+        cookie: context.req.headers.cookie || ''
+      }
+    });
+
+    let initialVideos: ShortsVideo[] = [];
+    if (shortsResponse.ok) {
+      const shortsData = await shortsResponse.json();
+      initialVideos = shortsData.data || [];
+    }
+
+    return {
+      props: {
+        user,
+        initialVideos
+      }
+    };
+  } catch (error) {
+    console.error('Error in getServerSideProps:', error);
+    return {
+      redirect: {
+        destination: '/auth',
+        permanent: false
+      }
+    };
+  }
+};

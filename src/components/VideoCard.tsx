@@ -20,6 +20,7 @@ interface VideoCardProps {
     createdAt: string;
     publishedAt: string;
     status: 'PROCESSING' | 'READY' | 'FAILED';
+    videoType?: 'normal' | 'shorts';
     channel: {
       id: string;
       name: string;
@@ -132,6 +133,13 @@ export default function VideoCard({
           {video.status === 'PROCESSING' && (
             <div className="absolute top-1 left-1 bg-orange-500 text-white text-xs px-1 py-0.5 rounded font-medium">
               Processing
+            </div>
+          )}
+
+          {/* Shorts Badge */}
+          {video.videoType === 'shorts' && (
+            <div className="absolute top-1 left-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-1 py-0.5 rounded font-medium shadow-lg">
+              📱 SHORTS
             </div>
           )}
         </div>
@@ -290,6 +298,13 @@ export default function VideoCard({
         {video.status === 'PROCESSING' && (
           <div className="absolute top-3 left-3 bg-orange-500 text-white text-xs px-2 py-1 rounded-md font-medium">
             Processing
+          </div>
+        )}
+
+        {/* Shorts Badge */}
+        {video.videoType === 'shorts' && (
+          <div className="absolute top-3 left-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-md font-medium shadow-lg">
+            📱 SHORTS
           </div>
         )}
 

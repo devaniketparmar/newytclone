@@ -3,6 +3,7 @@ import { GetServerSideProps } from 'next';
 import UniversalLayout from '../components/UniversalLayout';
 import VideoCard from '../components/VideoCard';
 import LoadingPlaceholder from '../components/LoadingPlaceholder';
+import PageHeader from '../components/PageHeader';
 
 interface LiveVideo {
   id: string;
@@ -66,26 +67,20 @@ export default function LivePage({ user }: LivePageProps) {
   };
 
   return (
-    <UniversalLayout user={user}>
+    <UniversalLayout 
+      user={user}
+      pageHeader={
+        <PageHeader
+          title="Live"
+          subtitle="Watch live streams happening right now"
+          icon={
+            <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+          }
+          iconColor="bg-red-600"
+        />
+      }
+    >
       <div className="min-h-screen bg-neutral-50">
-      {/* Header */}
-      <div className="bg-white border-b border-neutral-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-              </div>
-              <h1 className="text-3xl font-bold text-neutral-900">
-                Live
-              </h1>
-            </div>
-            <p className="text-neutral-600">
-              Watch live streams happening right now
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

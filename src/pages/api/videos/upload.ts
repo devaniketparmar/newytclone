@@ -105,11 +105,21 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
     const allowEmbedding = Array.isArray(fields.allowEmbedding) ? fields.allowEmbedding[0] === 'true' : true;
     const showViewCount = Array.isArray(fields.showViewCount) ? fields.showViewCount[0] === 'true' : true;
     const allowLiveStreaming = Array.isArray(fields.allowLiveStreaming) ? fields.allowLiveStreaming[0] === 'true' : false;
+    const videoType = Array.isArray(fields.videoType) ? fields.videoType[0] : fields.videoType || 'normal';
+    const clientDuration = Array.isArray(fields.duration) ? parseFloat(fields.duration[0]) : parseFloat(fields.duration || '0');
 
     if (!title || !title.trim()) {
       return res.status(400).json({
         success: false,
         error: 'Video title is required'
+      });
+    }
+
+    // Validate Shorts duration
+    if (videoType === 'shorts' && clientDuration > 60) {
+      return res.status(400).json({
+        success: false,
+        error: 'Shorts videos must be 60 seconds or less'
       });
     }
 
@@ -303,6 +313,7 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
         resolution: resolution,
         privacy: privacy.toUpperCase() as VideoPrivacy,
         status: VideoStatus.PROCESSING,
+        videoType: videoType.toUpperCase() as any,
         viewCount: BigInt(0),
         likeCount: 0,
         dislikeCount: 0,
@@ -320,7 +331,9 @@ async function handleVideoUpload(req: NextApiRequest, res: NextApiResponse) {
           monetizationEnabled: monetizationEnabled,
           allowEmbedding: allowEmbedding,
           showViewCount: showViewCount,
-          allowLiveStreaming: allowLiveStreaming
+          allowLiveStreaming: allowLiveStreaming,
+          videoType: videoType,
+          clientDuration: clientDuration
         }),
         processingStatus: JSON.stringify({
           status: 'processing',

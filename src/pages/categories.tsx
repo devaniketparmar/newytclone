@@ -5,6 +5,7 @@ import UniversalLayout from '../components/UniversalLayout';
 import VideoCard from '../components/VideoCard';
 import LoadingPlaceholder from '../components/LoadingPlaceholder';
 import CategoryBar from '../components/CategoryBar';
+import PageHeader from '../components/PageHeader';
 
 interface Video {
   id: string;
@@ -89,28 +90,28 @@ export default function CategoriesPage({ user }: CategoriesPageProps) {
   };
 
   return (
-    <UniversalLayout user={user}>
+    <UniversalLayout 
+      user={user}
+      pageHeader={
+        <PageHeader
+          title="Categories"
+          subtitle="Explore videos by category and discover new content"
+          icon={
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          }
+          iconColor="bg-green-600"
+        >
+          <CategoryBar 
+            categories={categories}
+            onCategorySelect={handleCategoryChange}
+            defaultCategory={selectedCategory}
+          />
+        </PageHeader>
+      }
+    >
       <div className="min-h-screen bg-neutral-50">
-        {/* Header */}
-        <div className="bg-white border-b border-neutral-200 sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="py-6">
-              <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                Categories
-              </h1>
-              <p className="text-neutral-600">
-                Explore videos by category and discover new content
-              </p>
-            </div>
-            
-            {/* Category Bar */}
-            <CategoryBar 
-              categories={categories}
-              onCategorySelect={handleCategoryChange}
-              defaultCategory={selectedCategory}
-            />
-          </div>
-        </div>
 
         {/* Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

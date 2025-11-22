@@ -114,6 +114,7 @@ model Video {
   categoryId      Int?        @map("category_id")
   privacy         VideoPrivacy @default(PUBLIC)
   status          VideoStatus @default(PROCESSING)
+  videoType       VideoType   @default(NORMAL) @map("video_type")
   viewCount       BigInt      @default(0) @map("view_count")
   likeCount       Int         @default(0) @map("like_count")
   dislikeCount    Int         @default(0) @map("dislike_count")
@@ -456,6 +457,11 @@ enum VideoStatus {
   PROCESSING
   READY
   FAILED
+}
+
+enum VideoType {
+  NORMAL
+  SHORTS
 }
 
 enum CommentStatus {

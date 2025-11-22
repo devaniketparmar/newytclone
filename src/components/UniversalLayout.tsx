@@ -9,6 +9,7 @@ interface UniversalLayoutProps {
   showHeader?: boolean;
   headerContent?: React.ReactNode;
   className?: string;
+  pageHeader?: React.ReactNode;
 }
 
 export default function UniversalLayout({ 
@@ -16,7 +17,8 @@ export default function UniversalLayout({
   user, 
   showHeader = true, 
   headerContent,
-  className = ""
+  className = "",
+  pageHeader
 }: UniversalLayoutProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -161,6 +163,7 @@ export default function UniversalLayout({
 
         {/* Main Content */}
         <main className="flex-1">
+          {pageHeader}
           {children}
         </main>
       </div>
